@@ -1,0 +1,31 @@
+{
+  "version": 2,
+  "dgSpecHash": "XuiiGXNoUn828B1N3RhoZT+CPtZtyRfUoR9/wXxMHd2/gGfWwh14eOZxun4nu4z/BG+RFqEqZlhxa3cXKHqC1Q==",
+  "success": true,
+  "projectFilePath": "C:\\Users\\NewUser\\Desktop\\Web_Projekat_Kviz\\Quiz_hub\\Quiz.Application\\Quiz.Application.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\NewUser\\.nuget\\packages\\bcrypt.net-next\\4.0.2\\bcrypt.net-next.4.0.2.nupkg.sha512",
+    "C:\\Users\\NewUser\\.nuget\\packages\\fluentvalidation\\11.8.0\\fluentvalidation.11.8.0.nupkg.sha512",
+    "C:\\Users\\NewUser\\.nuget\\packages\\mediatr\\12.1.1\\mediatr.12.1.1.nupkg.sha512",
+    "C:\\Users\\NewUser\\.nuget\\packages\\mediatr.contracts\\2.0.1\\mediatr.contracts.2.0.1.nupkg.sha512",
+    "C:\\Users\\NewUser\\.nuget\\packages\\microsoft.aspnetcore.http.abstractions\\2.2.0\\microsoft.aspnetcore.http.abstractions.2.2.0.nupkg.sha512",
+    "C:\\Users\\NewUser\\.nuget\\packages\\microsoft.aspnetcore.http.features\\2.2.0\\microsoft.aspnetcore.http.features.2.2.0.nupkg.sha512",
+    "C:\\Users\\NewUser\\.nuget\\packages\\microsoft.extensions.dependencyinjection.abstractions\\6.0.0\\microsoft.extensions.dependencyinjection.abstractions.6.0.0.nupkg.sha512",
+    "C:\\Users\\NewUser\\.nuget\\packages\\microsoft.extensions.primitives\\2.2.0\\microsoft.extensions.primitives.2.2.0.nupkg.sha512",
+    "C:\\Users\\NewUser\\.nuget\\packages\\system.memory\\4.5.1\\system.memory.4.5.1.nupkg.sha512",
+    "C:\\Users\\NewUser\\.nuget\\packages\\system.runtime.compilerservices.unsafe\\4.5.1\\system.runtime.compilerservices.unsafe.4.5.1.nupkg.sha512",
+    "C:\\Users\\NewUser\\.nuget\\packages\\system.text.encodings.web\\4.5.0\\system.text.encodings.web.4.5.0.nupkg.sha512"
+  ],
+  "logs": [
+    {
+      "code": "NU1603",
+      "level": "Warning",
+      "warningLevel": 1,
+      "message": "Quiz.Application depends on FluentValidation (>= 11.7.4) but FluentValidation 11.7.4 was not found. An approximate best match of FluentValidation 11.8.0 was resolved.",
+      "libraryId": "FluentValidation",
+      "targetGraphs": [
+        "net8.0"
+      ]
+    }
+  ]
+}

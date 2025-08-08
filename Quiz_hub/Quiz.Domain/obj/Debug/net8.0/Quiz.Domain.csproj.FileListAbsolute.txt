@@ -1,0 +1,11 @@
+C:\Users\NewUser\Desktop\Web_Projekat_Kviz\Quiz_hub\Quiz.Domain\bin\Debug\net8.0\Quiz.Domain.deps.json
+C:\Users\NewUser\Desktop\Web_Projekat_Kviz\Quiz_hub\Quiz.Domain\bin\Debug\net8.0\Quiz.Domain.dll
+C:\Users\NewUser\Desktop\Web_Projekat_Kviz\Quiz_hub\Quiz.Domain\bin\Debug\net8.0\Quiz.Domain.pdb
+C:\Users\NewUser\Desktop\Web_Projekat_Kviz\Quiz_hub\Quiz.Domain\obj\Debug\net8.0\Quiz.Domain.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\NewUser\Desktop\Web_Projekat_Kviz\Quiz_hub\Quiz.Domain\obj\Debug\net8.0\Quiz.Domain.AssemblyInfoInputs.cache
+C:\Users\NewUser\Desktop\Web_Projekat_Kviz\Quiz_hub\Quiz.Domain\obj\Debug\net8.0\Quiz.Domain.AssemblyInfo.cs
+C:\Users\NewUser\Desktop\Web_Projekat_Kviz\Quiz_hub\Quiz.Domain\obj\Debug\net8.0\Quiz.Domain.csproj.CoreCompileInputs.cache
+C:\Users\NewUser\Desktop\Web_Projekat_Kviz\Quiz_hub\Quiz.Domain\obj\Debug\net8.0\Quiz.Domain.dll
+C:\Users\NewUser\Desktop\Web_Projekat_Kviz\Quiz_hub\Quiz.Domain\obj\Debug\net8.0\refint\Quiz.Domain.dll
+C:\Users\NewUser\Desktop\Web_Projekat_Kviz\Quiz_hub\Quiz.Domain\obj\Debug\net8.0\Quiz.Domain.pdb
+C:\Users\NewUser\Desktop\Web_Projekat_Kviz\Quiz_hub\Quiz.Domain\obj\Debug\net8.0\ref\Quiz.Domain.dll

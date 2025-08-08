@@ -1,0 +1,17 @@
+C:\Users\NewUser\Desktop\Web_Projekat_Kviz\Quiz_hub\Quiz.Infrastructure\bin\Debug\net8.0\Quiz.Infrastructure.deps.json
+C:\Users\NewUser\Desktop\Web_Projekat_Kviz\Quiz_hub\Quiz.Infrastructure\bin\Debug\net8.0\Quiz.Infrastructure.runtimeconfig.json
+C:\Users\NewUser\Desktop\Web_Projekat_Kviz\Quiz_hub\Quiz.Infrastructure\bin\Debug\net8.0\Quiz.Infrastructure.dll
+C:\Users\NewUser\Desktop\Web_Projekat_Kviz\Quiz_hub\Quiz.Infrastructure\bin\Debug\net8.0\Quiz.Infrastructure.pdb
+C:\Users\NewUser\Desktop\Web_Projekat_Kviz\Quiz_hub\Quiz.Infrastructure\bin\Debug\net8.0\Quiz.Application.dll
+C:\Users\NewUser\Desktop\Web_Projekat_Kviz\Quiz_hub\Quiz.Infrastructure\bin\Debug\net8.0\Quiz.Domain.dll
+C:\Users\NewUser\Desktop\Web_Projekat_Kviz\Quiz_hub\Quiz.Infrastructure\bin\Debug\net8.0\Quiz.Application.pdb
+C:\Users\NewUser\Desktop\Web_Projekat_Kviz\Quiz_hub\Quiz.Infrastructure\bin\Debug\net8.0\Quiz.Domain.pdb
+C:\Users\NewUser\Desktop\Web_Projekat_Kviz\Quiz_hub\Quiz.Infrastructure\obj\Debug\net8.0\Quiz.Infrastructure.csproj.AssemblyReference.cache
+C:\Users\NewUser\Desktop\Web_Projekat_Kviz\Quiz_hub\Quiz.Infrastructure\obj\Debug\net8.0\Quiz.Infrastructure.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\NewUser\Desktop\Web_Projekat_Kviz\Quiz_hub\Quiz.Infrastructure\obj\Debug\net8.0\Quiz.Infrastructure.csproj.CoreCompileInputs.cache
+C:\Users\NewUser\Desktop\Web_Projekat_Kviz\Quiz_hub\Quiz.Infrastructure\obj\Debug\net8.0\Quiz.Infrastructure.csproj.CopyComplete
+C:\Users\NewUser\Desktop\Web_Projekat_Kviz\Quiz_hub\Quiz.Infrastructure\obj\Debug\net8.0\Quiz.Infrastructure.dll
+C:\Users\NewUser\Desktop\Web_Projekat_Kviz\Quiz_hub\Quiz.Infrastructure\obj\Debug\net8.0\refint\Quiz.Infrastructure.dll
+C:\Users\NewUser\Desktop\Web_Projekat_Kviz\Quiz_hub\Quiz.Infrastructure\obj\Debug\net8.0\Quiz.Infrastructure.pdb
+C:\Users\NewUser\Desktop\Web_Projekat_Kviz\Quiz_hub\Quiz.Infrastructure\obj\Debug\net8.0\Quiz.Infrastructure.genruntimeconfig.cache
+C:\Users\NewUser\Desktop\Web_Projekat_Kviz\Quiz_hub\Quiz.Infrastructure\obj\Debug\net8.0\ref\Quiz.Infrastructure.dll
