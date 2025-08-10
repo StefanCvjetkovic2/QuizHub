@@ -1,10 +1,3 @@
-C:\Users\NewUser\Desktop\Web_Projekat_Kviz\Quiz_hub\Quiz.Api\obj\Debug\net8.0\Quiz.Api.csproj.AssemblyReference.cache
-C:\Users\NewUser\Desktop\Web_Projekat_Kviz\Quiz_hub\Quiz.Api\obj\Debug\net8.0\Quiz.Api.GeneratedMSBuildEditorConfig.editorconfig
-C:\Users\NewUser\Desktop\Web_Projekat_Kviz\Quiz_hub\Quiz.Api\obj\Debug\net8.0\Quiz.Api.AssemblyInfoInputs.cache
-C:\Users\NewUser\Desktop\Web_Projekat_Kviz\Quiz_hub\Quiz.Api\obj\Debug\net8.0\Quiz.Api.AssemblyInfo.cs
-C:\Users\NewUser\Desktop\Web_Projekat_Kviz\Quiz_hub\Quiz.Api\obj\Debug\net8.0\Quiz.Api.csproj.CoreCompileInputs.cache
-C:\Users\NewUser\Desktop\Web_Projekat_Kviz\Quiz_hub\Quiz.Api\obj\Debug\net8.0\Quiz.Api.MvcApplicationPartsAssemblyInfo.cs
-C:\Users\NewUser\Desktop\Web_Projekat_Kviz\Quiz_hub\Quiz.Api\obj\Debug\net8.0\Quiz.Api.MvcApplicationPartsAssemblyInfo.cache
 C:\Users\NewUser\Desktop\Web_Projekat_Kviz\Quiz_hub\Quiz.Api\bin\Debug\net8.0\appsettings.Development.json
 C:\Users\NewUser\Desktop\Web_Projekat_Kviz\Quiz_hub\Quiz.Api\bin\Debug\net8.0\appsettings.json
 C:\Users\NewUser\Desktop\Web_Projekat_Kviz\Quiz_hub\Quiz.Api\bin\Debug\net8.0\Quiz.Api.exe
@@ -166,6 +159,14 @@ C:\Users\NewUser\Desktop\Web_Projekat_Kviz\Quiz_hub\Quiz.Api\bin\Debug\net8.0\Qu
 C:\Users\NewUser\Desktop\Web_Projekat_Kviz\Quiz_hub\Quiz.Api\bin\Debug\net8.0\Quiz.Application.pdb
 C:\Users\NewUser\Desktop\Web_Projekat_Kviz\Quiz_hub\Quiz.Api\bin\Debug\net8.0\Quiz.Domain.pdb
 C:\Users\NewUser\Desktop\Web_Projekat_Kviz\Quiz_hub\Quiz.Api\bin\Debug\net8.0\Quiz.Infrastructure.pdb
+C:\Users\NewUser\Desktop\Web_Projekat_Kviz\Quiz_hub\Quiz.Api\obj\Debug\net8.0\Quiz.Api.csproj.AssemblyReference.cache
+C:\Users\NewUser\Desktop\Web_Projekat_Kviz\Quiz_hub\Quiz.Api\obj\Debug\net8.0\Quiz.Api.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\NewUser\Desktop\Web_Projekat_Kviz\Quiz_hub\Quiz.Api\obj\Debug\net8.0\Quiz.Api.AssemblyInfoInputs.cache
+C:\Users\NewUser\Desktop\Web_Projekat_Kviz\Quiz_hub\Quiz.Api\obj\Debug\net8.0\Quiz.Api.AssemblyInfo.cs
+C:\Users\NewUser\Desktop\Web_Projekat_Kviz\Quiz_hub\Quiz.Api\obj\Debug\net8.0\Quiz.Api.csproj.CoreCompileInputs.cache
+C:\Users\NewUser\Desktop\Web_Projekat_Kviz\Quiz_hub\Quiz.Api\obj\Debug\net8.0\Quiz.Api.MvcApplicationPartsAssemblyInfo.cs
+C:\Users\NewUser\Desktop\Web_Projekat_Kviz\Quiz_hub\Quiz.Api\obj\Debug\net8.0\Quiz.Api.MvcApplicationPartsAssemblyInfo.cache
+C:\Users\NewUser\Desktop\Web_Projekat_Kviz\Quiz_hub\Quiz.Api\obj\Debug\net8.0\Quiz.Api.sourcelink.json
 C:\Users\NewUser\Desktop\Web_Projekat_Kviz\Quiz_hub\Quiz.Api\obj\Debug\net8.0\staticwebassets.build.json
 C:\Users\NewUser\Desktop\Web_Projekat_Kviz\Quiz_hub\Quiz.Api\obj\Debug\net8.0\staticwebassets.development.json
 C:\Users\NewUser\Desktop\Web_Projekat_Kviz\Quiz_hub\Quiz.Api\obj\Debug\net8.0\staticwebassets\msbuild.Quiz.Api.Microsoft.AspNetCore.StaticWebAssets.props

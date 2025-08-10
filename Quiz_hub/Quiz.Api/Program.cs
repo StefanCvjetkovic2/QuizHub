@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authentication.JwtBearer;
+﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
@@ -19,6 +19,10 @@ using QuizHub.Application.Feature.User.Commands; // RegisterUserCommand
 using Quiz.Application.Security;
 using Quiz.Infrastructure.Security;
 
+// Dodaj ovo
+using Quiz.Domain.Contracts;
+using Quiz.Infrastructure.Repository;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Db
@@ -34,6 +38,10 @@ builder.Services.AddSwaggerGen();
 
 // Repo DI
 builder.Services.AddScoped<IUserRepository, UserRepository>();
+
+// 🔹 Dodaj registraciju za Quiz i Category repository
+builder.Services.AddScoped<IQuizRepository, QuizRepository>();
+//builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
 
 // MediatR & Validators
 builder.Services.AddMediatR(cfg =>
@@ -90,7 +98,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-// Global exception handler � rano
+// Global exception handler – rano
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 
 app.UseHttpsRedirection();

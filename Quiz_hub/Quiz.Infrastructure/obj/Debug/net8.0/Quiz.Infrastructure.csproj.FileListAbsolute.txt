@@ -9,6 +9,7 @@ C:\Users\NewUser\Desktop\Web_Projekat_Kviz\Quiz_hub\Quiz.Infrastructure\bin\Debu
 C:\Users\NewUser\Desktop\Web_Projekat_Kviz\Quiz_hub\Quiz.Infrastructure\obj\Debug\net8.0\Quiz.Infrastructure.csproj.AssemblyReference.cache
 C:\Users\NewUser\Desktop\Web_Projekat_Kviz\Quiz_hub\Quiz.Infrastructure\obj\Debug\net8.0\Quiz.Infrastructure.GeneratedMSBuildEditorConfig.editorconfig
 C:\Users\NewUser\Desktop\Web_Projekat_Kviz\Quiz_hub\Quiz.Infrastructure\obj\Debug\net8.0\Quiz.Infrastructure.csproj.CoreCompileInputs.cache
+C:\Users\NewUser\Desktop\Web_Projekat_Kviz\Quiz_hub\Quiz.Infrastructure\obj\Debug\net8.0\Quiz.Infrastructure.sourcelink.json
 C:\Users\NewUser\Desktop\Web_Projekat_Kviz\Quiz_hub\Quiz.Infrastructure\obj\Debug\net8.0\Quiz.Infrastructure.csproj.CopyComplete
 C:\Users\NewUser\Desktop\Web_Projekat_Kviz\Quiz_hub\Quiz.Infrastructure\obj\Debug\net8.0\Quiz.Infrastructure.dll
 C:\Users\NewUser\Desktop\Web_Projekat_Kviz\Quiz_hub\Quiz.Infrastructure\obj\Debug\net8.0\refint\Quiz.Infrastructure.dll

@@ -8,6 +8,7 @@ C:\Users\NewUser\Desktop\Web_Projekat_Kviz\Quiz_hub\Quiz.Application\obj\Debug\n
 C:\Users\NewUser\Desktop\Web_Projekat_Kviz\Quiz_hub\Quiz.Application\obj\Debug\net8.0\Quiz.Application.AssemblyInfoInputs.cache
 C:\Users\NewUser\Desktop\Web_Projekat_Kviz\Quiz_hub\Quiz.Application\obj\Debug\net8.0\Quiz.Application.AssemblyInfo.cs
 C:\Users\NewUser\Desktop\Web_Projekat_Kviz\Quiz_hub\Quiz.Application\obj\Debug\net8.0\Quiz.Application.csproj.CoreCompileInputs.cache
+C:\Users\NewUser\Desktop\Web_Projekat_Kviz\Quiz_hub\Quiz.Application\obj\Debug\net8.0\Quiz.Application.sourcelink.json
 C:\Users\NewUser\Desktop\Web_Projekat_Kviz\Quiz_hub\Quiz.Application\obj\Debug\net8.0\Quiz.Application.csproj.CopyComplete
 C:\Users\NewUser\Desktop\Web_Projekat_Kviz\Quiz_hub\Quiz.Application\obj\Debug\net8.0\Quiz.Application.dll
 C:\Users\NewUser\Desktop\Web_Projekat_Kviz\Quiz_hub\Quiz.Application\obj\Debug\net8.0\refint\Quiz.Application.dll

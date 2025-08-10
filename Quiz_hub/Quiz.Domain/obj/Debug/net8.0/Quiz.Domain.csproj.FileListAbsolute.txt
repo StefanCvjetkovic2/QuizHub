@@ -5,6 +5,7 @@ C:\Users\NewUser\Desktop\Web_Projekat_Kviz\Quiz_hub\Quiz.Domain\obj\Debug\net8.0
 C:\Users\NewUser\Desktop\Web_Projekat_Kviz\Quiz_hub\Quiz.Domain\obj\Debug\net8.0\Quiz.Domain.AssemblyInfoInputs.cache
 C:\Users\NewUser\Desktop\Web_Projekat_Kviz\Quiz_hub\Quiz.Domain\obj\Debug\net8.0\Quiz.Domain.AssemblyInfo.cs
 C:\Users\NewUser\Desktop\Web_Projekat_Kviz\Quiz_hub\Quiz.Domain\obj\Debug\net8.0\Quiz.Domain.csproj.CoreCompileInputs.cache
+C:\Users\NewUser\Desktop\Web_Projekat_Kviz\Quiz_hub\Quiz.Domain\obj\Debug\net8.0\Quiz.Domain.sourcelink.json
 C:\Users\NewUser\Desktop\Web_Projekat_Kviz\Quiz_hub\Quiz.Domain\obj\Debug\net8.0\Quiz.Domain.dll
 C:\Users\NewUser\Desktop\Web_Projekat_Kviz\Quiz_hub\Quiz.Domain\obj\Debug\net8.0\refint\Quiz.Domain.dll
 C:\Users\NewUser\Desktop\Web_Projekat_Kviz\Quiz_hub\Quiz.Domain\obj\Debug\net8.0\Quiz.Domain.pdb
