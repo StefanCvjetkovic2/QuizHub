@@ -27,13 +27,15 @@ namespace Quiz.Infrastructure.Security
             {
                 new Claim(JwtRegisteredClaimNames.Sub, userId),
                 new Claim(JwtRegisteredClaimNames.UniqueName, username),
-                new Claim("uid", userId),
+                new Claim("uid", userId)
             };
+
             if (!string.IsNullOrWhiteSpace(email))
-                claims.Add(new Claim(JwtRegisteredClaimNames.Email, email!));
+                claims.Add(new Claim(JwtRegisteredClaimNames.Email, email));
 
             if (roles != null)
-                foreach (var r in roles) claims.Add(new Claim(ClaimTypes.Role, r));
+                foreach (var r in roles)
+                    claims.Add(new Claim(ClaimTypes.Role, r));
 
             var expires = DateTime.UtcNow.AddMinutes(expMinutes);
 

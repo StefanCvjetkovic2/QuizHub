@@ -16,7 +16,7 @@ namespace Quiz.Infrastructure.Repository
 
         public async Task<(IReadOnlyList<Domain.Entities.Quiz> Items, int TotalCount)> GetPagedAsync(
             int page, int pageSize,
-            string? categoryId,
+            int? categoryId,
             int? difficulty,
             string? q,
             CancellationToken ct)
@@ -27,8 +27,10 @@ namespace Quiz.Infrastructure.Repository
                 .Include(x => x.Category)
                 .AsQueryable();
 
-            if (!string.IsNullOrWhiteSpace(categoryId))
-                query = query.Where(x => x.CategoryId == categoryId);
+            if (categoryId.HasValue)
+                query = query.Where(x => x.CategoryId == categoryId.Value);
+
+            
 
             if (difficulty.HasValue)
                 query = query.Where(x => x.Difficulty == difficulty.Value);

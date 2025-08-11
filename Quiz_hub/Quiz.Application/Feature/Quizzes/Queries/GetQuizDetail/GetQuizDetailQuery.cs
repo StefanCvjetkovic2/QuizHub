@@ -14,7 +14,7 @@ namespace Quiz.Application.Feature.Quizzes.Queries.GetQuizDetail
         public string? Description { get; set; }
         public int Difficulty { get; set; }
         public int TimeLimitSeconds { get; set; }
-        public string CategoryId { get; set; } = default!;
+        public int CategoryId { get; set; } = default!;
         public string? CategoryName { get; set; }
 
         public IReadOnlyList<QuestionDto> Questions { get; set; } = Array.Empty<QuestionDto>();

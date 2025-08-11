@@ -1,0 +1,14 @@
+# Visual Studio privremeni fajlovi
+.vs/
+*.user
+*.suo
+
+# Build fajlovi
+bin/
+obj/
+
+# Ostali cache fajlovi
+*.vsidx
+*.dll
+*.exe
+*.pdb

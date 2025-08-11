@@ -10,7 +10,7 @@ namespace Quiz.Domain.Contracts
     {
         Task<(IReadOnlyList<Quiz.Domain.Entities.Quiz> Items, int TotalCount)> GetPagedAsync(
             int page, int pageSize,
-            string? categoryId,
+            int? categoryId,
             int? difficulty,
             string? q,
             CancellationToken ct);

@@ -17,7 +17,12 @@ namespace Quiz.Application.Feature.Token.Commands
 
         public async Task<CreateTokenResponse> Handle(CreateTokenCommand request, CancellationToken ct)
         {
-            var user = await _users.GetByUsernameOrEmailAsync(request.UsernameOrEmail, ct);
+            // malo očistimo input
+            var identifier = request.UsernameOrEmail?.Trim();
+            if (string.IsNullOrWhiteSpace(identifier) || string.IsNullOrWhiteSpace(request.Password))
+                return new CreateTokenResponse { Success = false, Message = "Invalid credentials." };
+
+            var user = await _users.GetByUsernameOrEmailAsync(identifier, ct);
             if (user is null)
                 return new CreateTokenResponse { Success = false, Message = "Invalid credentials." };
 
@@ -25,7 +30,12 @@ namespace Quiz.Application.Feature.Token.Commands
             if (!ok)
                 return new CreateTokenResponse { Success = false, Message = "Invalid credentials." };
 
-            var (token, expires) = _jwt.CreateToken(user.Id, user.Username, user.Email, roles: null);
+            // ➜ DODATO: role u tokenu (Admin policy koristi ClaimTypes.Role == "Admin")
+            List<string>? roles = null;
+            if (user.IsAdmin)
+                roles = new List<string> { "Admin" };
+
+            var (token, expires) = _jwt.CreateToken(user.Id, user.Username, user.Email, roles);
 
             return new CreateTokenResponse
             {
