@@ -9,18 +9,22 @@ using Microsoft.OpenApi.Models;
 
 using Quiz.Api.Middlewear;
 using Quiz.Application.Behaviours;
-using Quiz.Application.Feature.Token.Commands;                 // CreateTokenCommand (+ validator)
-using Quiz.Application.Feature.Quizzes.Queries.GetQuizzes;    // (anchor za MediatR)
+using Quiz.Application.Feature.Token.Commands;                     // CreateTokenCommand (+ validator)
+using QuizHub.Application.Feature.User.Commands;                  // RegisterUserCommand (+ validator)
+using Quiz.Application.Feature.Admin.Quizzes.Commands.CreateQuiz; // CreateQuizCommandValidator
 using Quiz.Application.Security;
-using QuizHub.Application.Feature.User.Commands;              // RegisterUserCommand (+ validator)
 
 using Quiz.Infrastructure.Data;
-using Quiz.Infrastructure.Repository;
-using Quiz.Infrastructure.Security;
 
-using QuizHub.Domain.Contracts;
+// Repozitorijumi (u tvom kodu postoje i Quiz.* i QuizHub.* prostori imena)
+using Quiz.Infrastructure.Repository;
 using QuizHub.Infrastructure.Repository;
-using Quiz.Domain.Contracts;                                // IUserRepository, IQuizRepository, IQuizAdminRepository, IResultsRepository, ICategoryRepository
+
+// Kontrakti
+using Quiz.Domain.Contracts;
+using QuizHub.Domain.Contracts;
+
+using Quiz.Infrastructure.Security;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -66,23 +70,40 @@ builder.Services.AddSwaggerGen(c =>
 });
 
 // =======================
+// CORS (dev-friendly)
+// =======================
+const string FrontendDevPolicy = "FrontendDev";
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(FrontendDevPolicy, policy =>
+    {
+        // dozvoli React dev server
+        policy.WithOrigins("http://localhost:3000", "https://localhost:3000")
+              .AllowAnyHeader()
+              .AllowAnyMethod();
+        // Ako koristiš cookie auth, dodaj .AllowCredentials() i izbaci AllowAnyOrigin
+    });
+});
+
+// =======================
 // Repositories (DI)
 // =======================
+// Zadrži samo one koji postoje u tvom solutionu (ako neki tip ne postoji, ukloni tu liniju).
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IQuizRepository, QuizRepository>();
 builder.Services.AddScoped<IQuizAdminRepository, QuizAdminRepository>();
 builder.Services.AddScoped<IResultsRepository, ResultsRepository>();
-builder.Services.AddScoped<ICategoryRepository, CategoryRepository>(); // ako imaš Category repo
+builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
 
 // =======================
 // MediatR & FluentValidation
 // =======================
-// Dovoljno je da skenira ceo Application assembly koristeći jedan anchor tip:
 builder.Services.AddMediatR(cfg =>
     cfg.RegisterServicesFromAssemblyContaining<RegisterUserCommandHandler>());
 
-// Pokupi sve validatore iz Application assembly-ja:
 builder.Services.AddValidatorsFromAssembly(typeof(RegisterUserCommandValidator).Assembly);
+builder.Services.AddValidatorsFromAssemblyContaining<CreateQuizCommandValidator>();
 
 // Globalna validation pipeline
 builder.Services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehaviour<,>));
@@ -116,7 +137,6 @@ builder.Services.AddAuthentication(options =>
         ValidateLifetime = true,
         ClockSkew = TimeSpan.FromSeconds(30),
 
-        // bitno za role i name iz tokena
         RoleClaimType = ClaimTypes.Role,
         NameClaimType = ClaimTypes.Name
     };
@@ -124,23 +144,11 @@ builder.Services.AddAuthentication(options =>
 
 builder.Services.AddAuthorization(o =>
 {
-    // koristi se na admin kontrolerima: [Authorize(Policy = "Admin")]
     o.AddPolicy("Admin", p => p.RequireRole("Admin"));
 });
 
 // Token service
 builder.Services.AddSingleton<IJwtTokenService, JwtTokenService>();
-
-// =======================
-// CORS (dev-friendly)
-// =======================
-builder.Services.AddCors(options =>
-{
-    options.AddDefaultPolicy(policy =>
-    {
-        policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod();
-    });
-});
 
 var app = builder.Build();
 
@@ -156,8 +164,14 @@ if (app.Environment.IsDevelopment())
 // globalni exception handler
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 
-app.UseHttpsRedirection();
-app.UseCors();
+// VAŽNO: CORS prije auth-a
+app.UseCors(FrontendDevPolicy);
+
+// HTTPS redirekcija SAMO van develop okruženja (ovo često izazove "Network Error" kad front gađa http)
+if (!app.Environment.IsDevelopment())
+{
+    app.UseHttpsRedirection();
+}
 
 app.UseAuthentication();
 app.UseAuthorization();

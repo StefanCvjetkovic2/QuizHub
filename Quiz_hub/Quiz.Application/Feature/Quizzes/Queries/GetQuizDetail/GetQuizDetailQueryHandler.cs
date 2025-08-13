@@ -1,6 +1,6 @@
 ﻿using MediatR;
 using Quiz.Domain.Contracts;
-using QuizHub.Domain.Contracts;
+
 
 namespace Quiz.Application.Feature.Quizzes.Queries.GetQuizDetail
 {

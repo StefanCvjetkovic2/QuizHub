@@ -1,6 +1,5 @@
 ﻿using MediatR;
 using Quiz.Domain.Contracts;
-using QuizHub.Domain.Contracts;
 
 namespace Quiz.Application.Feature.Quizzes.Queries.GetQuizzes
 {
@@ -11,13 +10,17 @@ namespace Quiz.Application.Feature.Quizzes.Queries.GetQuizzes
 
         public async Task<GetQuizzesResponse> Handle(GetQuizzesQuery request, CancellationToken ct)
         {
-            var (items, total) = await _repo.GetPagedAsync(
+            var pageResult = await _repo.GetPagedAsync(
                 page: request.Page,
                 pageSize: request.PageSize,
                 categoryId: request.CategoryId,
                 difficulty: request.Difficulty,
                 q: request.Q,
-                ct);
+                isPublished: null,   // ili true/false ako uvedeš filter objave
+                ct: ct);
+
+            var items = pageResult.Items;
+            var total = pageResult.TotalCount;
 
             var dtos = items.Select(x => new QuizListItemDto
             {
