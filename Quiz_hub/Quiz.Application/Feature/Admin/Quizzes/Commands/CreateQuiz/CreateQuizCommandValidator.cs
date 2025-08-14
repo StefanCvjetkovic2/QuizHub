@@ -11,8 +11,8 @@ namespace Quiz.Application.Feature.Admin.Quizzes.Commands.CreateQuiz
             RuleFor(x => x.Title).NotEmpty().Length(3, 100);
             RuleFor(x => x.CategoryId).GreaterThan(0);
             RuleFor(x => x.TimeLimitSeconds).GreaterThan(0);
-            RuleFor(x => x.Difficulty).GreaterThan(0);
-            RuleFor(x => x.Questions).NotEmpty();
+           // RuleFor(x => x.Difficulty).GreaterThan(0);
+           // RuleFor(x => x.Questions).NotEmpty();
 
             RuleForEach(x => x.Questions).SetValidator(new CreateQuestionDtoValidator());
         }

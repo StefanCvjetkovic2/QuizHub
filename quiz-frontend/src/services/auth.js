@@ -1,17 +1,16 @@
 import http from "./http";
+import { getUserFromToken } from "../models/auth";
 
-/** Sačuvaj token u storage + stavi ga na axios za dalje pozive */
+/** Snimi token i postavi ga na axios */
 export function setAuthToken(token) {
   localStorage.setItem("auth_token", token);
   http.defaults.headers.common["Authorization"] = `Bearer ${token}`;
 }
 
-/** Učitaj token iz storage-a pri startu aplikacije */
+/** Učitaj token pri startu (ako postoji) */
 export function loadAuthTokenFromStorage() {
   const t = localStorage.getItem("auth_token");
-  if (t) {
-    http.defaults.headers.common["Authorization"] = `Bearer ${t}`;
-  }
+  if (t) http.defaults.headers.common["Authorization"] = `Bearer ${t}`;
 }
 
 /** Logout */
@@ -20,43 +19,29 @@ export function logout() {
   delete http.defaults.headers.common["Authorization"];
 }
 
-/** POST /api/users/register (multipart/form-data) */
+/** REGISTER (multipart/form-data) */
 export async function registerUser(formData) {
-  try {
-    const { data } = await http.post("/api/users/register", formData, {
-      headers: { "Content-Type": "multipart/form-data" },
-    });
-    return data; // { success, message }
-  } catch (err) {
-    console.error("REGISTER ERROR", err);
-    const msg =
-      err?.response?.data?.message ||
-      err?.response?.data?.title ||
-      err?.message ||
-      "Registracija nije uspela.";
-    throw new Error(msg);
-  }
+  const { data } = await http.post("/api/users/register", formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+  return data; // { success, message }
 }
 
-/** POST /api/users/login – telo: { userNameOrEmail, password } */
+/** LOGIN (JSON) – očekuje { success, token, ... } */
 export async function loginUser(payload) {
-  try {
-    const { data } = await http.post("/api/users/login", payload, {
-      headers: { "Content-Type": "application/json" },
-    });
-    // očekujemo: { success, message, token, expiresAtUtc, userId, username, email }
-    if (!data?.success || !data?.token) {
-      throw new Error(data?.message || "Neispravni podaci za prijavu.");
-    }
-    setAuthToken(data.token);
-    return data;
-  } catch (err) {
-    console.error("LOGIN ERROR", err);
-    const msg =
-      err?.response?.data?.message ||
-      err?.response?.data?.title ||
-      err?.message ||
-      "Prijava nije uspela.";
-    throw new Error(msg);
+  const { data } = await http.post("/api/users/login", payload, {
+    headers: { "Content-Type": "application/json" },
+  });
+  if (!data?.success || !data?.token) {
+    throw new Error(data?.message || "Neispravni podaci za prijavu.");
   }
+  setAuthToken(data.token);
+  getUserFromToken(); // inicijalizuj parsiranog user-a
+  return data;
+}
+
+/** Brzi test */
+export async function getMe() {
+  const { data } = await http.get("/api/users/me");
+  return data;
 }

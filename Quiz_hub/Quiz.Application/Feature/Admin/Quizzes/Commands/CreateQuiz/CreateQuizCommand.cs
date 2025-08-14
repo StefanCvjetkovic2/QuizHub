@@ -10,7 +10,7 @@ namespace Quiz.Application.Feature.Admin.Quizzes.Commands.CreateQuiz
         public string? Description { get; set; }
         public int TimeLimitSeconds { get; set; }
         public int Difficulty { get; set; }
-        public string CreatedByUserId { get; set; } = default!; // iz tokena ili ručno
+        public string? CreatedByUserId { get; set; } // iz tokena ili ručno
 
         // NOVO: pitanja/opcije
         public IList<CreateQuestionDto> Questions { get; set; } = new List<CreateQuestionDto>();

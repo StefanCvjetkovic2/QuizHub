@@ -7,6 +7,7 @@ using Quiz.Application.Feature.Admin.Quizzes.Commands.UpdateQuiz;
 using Quiz.Application.Feature.Admin.Quizzes.Commands.DeleteQuiz;
 using Quiz.Application.Feature.Quizzes.Queries.GetQuizzes;
 using Quiz.Application.Feature.Quizzes.Queries.GetQuizDetail;
+using System.Security.Claims;
 
 namespace Quiz.Api.Controllers.Admin
 {
@@ -22,10 +23,10 @@ namespace Quiz.Api.Controllers.Admin
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] CreateQuizCommand cmd, CancellationToken ct)
         {
-            // Ubaci autora iz tokena ako postoji (opciono)
-            var uid = User?.FindFirst("uid")?.Value ?? User?.Identity?.Name;
-            if (!string.IsNullOrWhiteSpace(uid) && string.IsNullOrWhiteSpace(cmd.CreatedByUserId))
-                cmd.CreatedByUserId = uid!;
+            cmd.CreatedByUserId =
+                 User.FindFirst("uid")?.Value ??
+                 User.FindFirst(ClaimTypes.NameIdentifier)?.Value ??
+                 cmd.CreatedByUserId;
 
             var res = await _mediator.Send(cmd, ct);
             return res.Success ? Ok(res) : BadRequest(res);

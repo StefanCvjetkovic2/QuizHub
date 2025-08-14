@@ -9,9 +9,10 @@ export default function Register() {
   const [confirm, setConfirm]   = useState("");
   const [file, setFile]         = useState(null);
   const [preview, setPreview]   = useState("");
-  const [err, setErr]           = useState("");
-  const [ok, setOk]             = useState("");
-  const [busy, setBusy]         = useState(false);
+
+  const [err, setErr] = useState("");
+  const [ok, setOk]   = useState("");
+  const [busy, setBusy] = useState(false);
 
   function onPickFile(e) {
     const f = e.target.files?.[0];
@@ -22,6 +23,7 @@ export default function Register() {
   async function onSubmit(e) {
     e.preventDefault();
     setErr(""); setOk("");
+
     if (!username || username.length < 3) return setErr("Username mora imati bar 3 karaktera.");
     if (!email || !/^\S+@\S+\.\S+$/.test(email)) return setErr("Unesi ispravan email.");
     if (!password || password.length < 6) return setErr("Lozinka mora imati bar 6 karaktera.");
@@ -41,7 +43,9 @@ export default function Register() {
         setOk("Uspešna registracija! Sada se možete prijaviti.");
         setUsername(""); setFullName(""); setEmail(""); setPassword(""); setConfirm("");
         setFile(null); setPreview("");
-      } else setErr(res?.message || "Registracija nije uspela.");
+      } else {
+        setErr(res?.message || "Registracija nije uspela.");
+      }
     } catch (e) {
       setErr(e.message || "Registracija nije uspela.");
     } finally {
@@ -62,21 +66,22 @@ export default function Register() {
           <div className="form-group">
             <label>Profilna slika (opciono)</label>
             <input type="file" accept="image/*" onChange={onPickFile} />
-            {preview && <div className="preview"><img src={preview} alt="preview" width="36" height="36" style={{borderRadius:8,objectFit:"cover"}}/><span>{file?.name}</span></div>}
+            {preview && (
+              <div className="preview">
+                <img src={preview} alt="preview" width="36" height="36" style={{borderRadius:8,objectFit:"cover"}}/>
+                <span>{file?.name}</span>
+              </div>
+            )}
           </div>
-           <div className="form-actions">
-            <button
-              type="submit"
-              className="btn btn--primary btn--full"
-              disabled={busy}
-            >
+
+          <div className="form-actions">
+            <button type="submit" className="btn btn--primary btn--full" disabled={busy}>
               {busy ? "Registrujem..." : "Registruj se"}
             </button>
           </div>
         </form>
         {err && <div className="error">{err}</div>}
         {ok && <div className="success">{ok}</div>}
-        <a className="link" href="/">Nazad na početnu</a>
       </div>
     </div>
   );
