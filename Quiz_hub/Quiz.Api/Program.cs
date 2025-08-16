@@ -12,6 +12,7 @@ using Quiz.Application.Behaviours;
 using Quiz.Application.Feature.Token.Commands;                     // CreateTokenCommand (+ validator)
 using QuizHub.Application.Feature.User.Commands;                  // RegisterUserCommand (+ validator)
 using Quiz.Application.Feature.Admin.Quizzes.Commands.CreateQuiz; // CreateQuizCommandValidator
+using Quiz.Application.Feature.Admin.Categories.Commands; // CreateQuizCommandValidator
 using Quiz.Application.Security;
 
 using Quiz.Infrastructure.Data;
@@ -104,6 +105,8 @@ builder.Services.AddMediatR(cfg =>
 
 builder.Services.AddValidatorsFromAssembly(typeof(RegisterUserCommandValidator).Assembly);
 builder.Services.AddValidatorsFromAssemblyContaining<CreateQuizCommandValidator>();
+
+
 
 // Globalna validation pipeline
 builder.Services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehaviour<,>));

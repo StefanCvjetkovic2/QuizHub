@@ -14,7 +14,7 @@ export default function TopBar() {
     <div className="topbar">
       <div className="topbar__inner">
         <Link
-          to={user ? (isAdmin ? "/admin" : "/quizzes") : "/"}
+          to={user ? (isAdmin ? "/admin" : "/app") : "/"}
           className="brand"
         >
           QuizHub
@@ -32,7 +32,7 @@ export default function TopBar() {
             {isAdmin ? (
               <Link to="/admin" className="btn btn--outline">Admin</Link>
             ) : (
-              <Link to="/quizzes" className="btn btn--outline">Kvizovi</Link>
+              <Link to="/app" className="btn btn--outline">Kvizovi</Link>
             )}
             <span className="topbar__user">{user.username || user.email}</span>
             <button onClick={onLogout} className="btn btn--primary">Odjava</button>

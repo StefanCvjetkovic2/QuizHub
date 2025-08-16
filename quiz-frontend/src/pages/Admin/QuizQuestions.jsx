@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { getAdminQuiz } from "../../services/quizzes";
-import { createAdminQuestion, deleteAdminQuestion } from "../../services/questions";
+import { createQuestion, updateAdminQuestion, deleteAdminQuestion } from "../../services/questions";
 
 export default function AdminQuizQuestions() {
   const { id } = useParams(); // quizId
@@ -9,13 +9,17 @@ export default function AdminQuizQuestions() {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
 
-  // forma
+  // forma (dodavanje / uređivanje)
+  const [mode, setMode] = useState("add"); // "add" | "edit"
+  const [editId, setEditId] = useState(null);
   const [text, setText] = useState("");
   const [type, setType] = useState("SingleChoice");
   const [order, setOrder] = useState(1);
+  // editor odgovora (ako treba)
   const [options, setOptions] = useState([{ text: "", correct: false }]);
   const [tfAnswer, setTfAnswer] = useState("true");
   const [fillAnswers, setFillAnswers] = useState([""]);
+  const [editAnswers, setEditAnswers] = useState(false); // ako true, šaljemo answers u update
 
   const sortedQuestions = useMemo(
     () => (quiz?.questions || []).slice().sort((a,b)=>a.order-b.order),
@@ -37,6 +41,19 @@ export default function AdminQuizQuestions() {
 
   useEffect(()=>{ load(); /* eslint-disable-next-line */ }, [id]);
 
+  function resetForm() {
+    setMode("add");
+    setEditId(null);
+    setText("");
+    setType("SingleChoice");
+    setOrder((quiz?.questions?.length || 0) + 1);
+    setOptions([{ text: "", correct: false }]);
+    setTfAnswer("true");
+    setFillAnswers([""]);
+    setEditAnswers(false);
+  }
+
+  // helpers za editor odgovora
   function addOption() { setOptions(o => [...o, { text: "", correct: false }]); }
   function removeOption(i) { setOptions(o => o.filter((_,idx)=>idx!==i)); }
   function setOption(i, patch) { setOptions(o => o.map((op,idx)=>idx===i ? {...op, ...patch} : op)); }
@@ -45,6 +62,7 @@ export default function AdminQuizQuestions() {
   function removeFill(i) { setFillAnswers(a => a.filter((_,idx)=>idx!==i)); }
   function setFill(i, val) { setFillAnswers(a => a.map((x,idx)=>idx===i?val:x)); }
 
+  // submit ADD
   async function onAddQuestion(e) {
     e.preventDefault();
     setErr("");
@@ -77,10 +95,73 @@ export default function AdminQuizQuestions() {
     const payload = { quizId: id, text, type, order: Number(order)||0, answers };
     try {
       setBusy(true);
-      const res = await createAdminQuestion(payload);
+      const res = await createQuestion(payload);
       if (!res?.success) throw new Error(res?.message || "Dodavanje nije uspjelo.");
-      setText(""); setOptions([{ text:"", correct:false }]); setTfAnswer("true"); setFillAnswers([""]);
-      setOrder((quiz?.questions?.length || 0) + 2);
+      resetForm();
+      await load();
+    } catch (e) {
+      setErr(e.message || "Greška.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  // klik na Uredi
+  function onStartEdit(q) {
+    setMode("edit");
+    setEditId(q.id);
+    setText(q.text || "");
+    setType(q.type || "SingleChoice");
+    setOrder(q.order ?? 0);
+    // po defaultu NE mijenjamo odgovore (backend ih ostavlja kakvi jesu)
+    setEditAnswers(false);
+    // ako admin ipak želi promjenu odgovora, tada unosi nove u editor ispod
+    setOptions([{ text: "", correct: false }]);
+    setTfAnswer("true");
+    setFillAnswers([""]);
+  }
+
+  // submit EDIT
+  async function onEditQuestion(e) {
+    e.preventDefault();
+    if (!editId) return;
+    setErr("");
+
+    let payload = { text, type, order: Number(order)||0 };
+
+    if (editAnswers) {
+      // admin želi i nove odgovore -> validiramo i šaljemo 'answers'
+      let answers = [];
+      if (type === "SingleChoice" || type === "MultipleChoice") {
+        const clean = options.map(o => ({ text: o.text.trim(), isCorrect: !!o.correct }))
+                             .filter(o => o.text.length > 0);
+        if (clean.length < 2) return setErr("Dodaj bar dvije opcije.");
+        if (type === "SingleChoice" && clean.filter(o=>o.isCorrect).length !== 1)
+          return setErr("Za 'Jedan tačan' označi tačno jednu opciju.");
+        if (type === "MultipleChoice" && clean.filter(o=>o.isCorrect).length < 1)
+          return setErr("Za 'Višestruki' označi bar jednu tačnu opciju.");
+        answers = clean;
+      }
+      if (type === "TrueFalse") {
+        const isTrue = tfAnswer === "true";
+        answers = [
+          { text: "Tačno", isCorrect: isTrue },
+          { text: "Netačno", isCorrect: !isTrue },
+        ];
+      }
+      if (type === "FillInTheBlank") {
+        const clean = fillAnswers.map(s => s.trim()).filter(Boolean);
+        if (clean.length < 1) return setErr("Dodaj bar jedan tačan unos.");
+        answers = clean.map(t => ({ text: t, isCorrect: true }));
+      }
+      payload = { ...payload, answers };
+    } // ako nije čekirano, answers ne šaljemo -> backend ostavlja postojeće
+
+    try {
+      setBusy(true);
+      const res = await updateAdminQuestion(editId, payload);
+      if (!res?.success) throw new Error(res?.message || "Ažuriranje nije uspjelo.");
+      resetForm();
       await load();
     } catch (e) {
       setErr(e.message || "Greška.");
@@ -122,6 +203,7 @@ export default function AdminQuizQuestions() {
             <div>{q.type}</div>
             <div>{q.text}</div>
             <div className="row-actions">
+              <button className="btn btn--outline" onClick={() => onStartEdit(q)}>Uredi</button>
               <button className="btn btn--outline" onClick={()=>onDeleteQuestion(q.id)}>Obriši</button>
             </div>
           </div>
@@ -131,10 +213,11 @@ export default function AdminQuizQuestions() {
         )}
       </div>
 
-      {/* Dodavanje novog */}
+      {/* Forma: ADD ili EDIT */}
       <div className="card">
-        <h2>Dodaj pitanje</h2>
-        <form onSubmit={onAddQuestion}>
+        <h2>{mode === "add" ? "Dodaj pitanje" : "Uredi pitanje"}</h2>
+
+        <form onSubmit={mode === "add" ? onAddQuestion : onEditQuestion}>
           <div className="form-group">
             <label>Tekst pitanja</label>
             <input value={text} onChange={e=>setText(e.target.value)} />
@@ -155,64 +238,85 @@ export default function AdminQuizQuestions() {
             <input type="number" min={0} value={order} onChange={e=>setOrder(e.target.value)} />
           </div>
 
-          {(type === "SingleChoice" || type === "MultipleChoice") && (
+          {/* U EDIT modu biramo da li ćemo mijenjati odgovore */}
+          {mode === "edit" && (
             <div className="form-group">
-              <label>Opcije</label>
-              {options.map((op, i) => (
-                <div key={i} style={{display:"flex", gap:8, marginBottom:6}}>
-                  <input
-                    placeholder={`Opcija ${i+1}`}
-                    value={op.text}
-                    onChange={e=>setOption(i,{text:e.target.value})}
-                    style={{flex:1}}
-                  />
-                  <label style={{display:"flex", alignItems:"center", gap:6}}>
-                    <input
-                      type="checkbox"
-                      checked={op.correct}
-                      onChange={e=>setOption(i,{correct:e.target.checked})}
-                    />
-                    tačno
-                  </label>
-                  <button type="button" className="btn btn--outline" onClick={()=>removeOption(i)}>Ukloni</button>
+              <label style={{display:"flex",alignItems:"center",gap:8}}>
+                <input type="checkbox" checked={editAnswers} onChange={e=>setEditAnswers(e.target.checked)} />
+                Promijeni i odgovore
+              </label>
+              <div className="muted" style={{marginTop:6}}>
+                Ako ne označiš, sačuvat će se postojeći odgovori (mijenja se samo tekst/tip/redoslijed).
+              </div>
+            </div>
+          )}
+
+          {/* Editor odgovora prikazuj ako smo u ADD modu, ili u EDIT modu samo ako je čekirano "Promijeni i odgovore" */}
+          {(mode === "add" || editAnswers) && (
+            <>
+              {(type === "SingleChoice" || type === "MultipleChoice") && (
+                <div className="form-group">
+                  <label>Opcije</label>
+                  {options.map((op, i) => (
+                    <div key={i} style={{display:"flex", gap:8, marginBottom:6}}>
+                      <input
+                        placeholder={`Opcija ${i+1}`}
+                        value={op.text}
+                        onChange={e=>setOption(i,{text:e.target.value})}
+                        style={{flex:1}}
+                      />
+                      <label style={{display:"flex", alignItems:"center", gap:6}}>
+                        <input
+                          type="checkbox"
+                          checked={op.correct}
+                          onChange={e=>setOption(i,{correct:e.target.checked})}
+                        />
+                        tačno
+                      </label>
+                      <button type="button" className="btn btn--outline" onClick={()=>removeOption(i)}>Ukloni</button>
+                    </div>
+                  ))}
+                  <button type="button" className="btn btn--outline" onClick={addOption}>+ Dodaj opciju</button>
                 </div>
-              ))}
-              <button type="button" className="btn btn--outline" onClick={addOption}>+ Dodaj opciju</button>
-            </div>
-          )}
+              )}
 
-          {type === "TrueFalse" && (
-            <div className="form-group">
-              <label>Tačan odgovor</label>
-              <select value={tfAnswer} onChange={e=>setTfAnswer(e.target.value)}>
-                <option value="true">Tačno</option>
-                <option value="false">Netačno</option>
-              </select>
-            </div>
-          )}
-
-          {type === "FillInTheBlank" && (
-            <div className="form-group">
-              <label>Prihvaćeni odgovori</label>
-              {fillAnswers.map((s, i) => (
-                <div key={i} style={{display:"flex", gap:8, marginBottom:6}}>
-                  <input
-                    placeholder={`Odgovor ${i+1}`}
-                    value={s}
-                    onChange={e=>setFill(i, e.target.value)}
-                    style={{flex:1}}
-                  />
-                  <button type="button" className="btn btn--outline" onClick={()=>removeFill(i)}>Ukloni</button>
+              {type === "TrueFalse" && (
+                <div className="form-group">
+                  <label>Tačan odgovor</label>
+                  <select value={tfAnswer} onChange={e=>setTfAnswer(e.target.value)}>
+                    <option value="true">Tačno</option>
+                    <option value="false">Netačno</option>
+                  </select>
                 </div>
-              ))}
-              <button type="button" className="btn btn--outline" onClick={addFill}>+ Dodaj odgovor</button>
-            </div>
+              )}
+
+              {type === "FillInTheBlank" && (
+                <div className="form-group">
+                  <label>Prihvaćeni odgovori</label>
+                  {fillAnswers.map((s, i) => (
+                    <div key={i} style={{display:"flex", gap:8, marginBottom:6}}>
+                      <input
+                        placeholder={`Odgovor ${i+1}`}
+                        value={s}
+                        onChange={e=>setFill(i, e.target.value)}
+                        style={{flex:1}}
+                      />
+                      <button type="button" className="btn btn--outline" onClick={()=>removeFill(i)}>Ukloni</button>
+                    </div>
+                  ))}
+                  <button type="button" className="btn btn--outline" onClick={addFill}>+ Dodaj odgovor</button>
+                </div>
+              )}
+            </>
           )}
 
-          <div className="form-actions">
+          <div className="form-actions" style={{display:"flex", gap:8}}>
             <button className="btn btn--primary" disabled={busy}>
-              {busy ? "Dodajem..." : "Dodaj pitanje"}
+              {busy ? (mode === "add" ? "Dodajem..." : "Snimam...") : (mode === "add" ? "Dodaj pitanje" : "Sačuvaj izmjene")}
             </button>
+            {mode === "edit" && (
+              <button type="button" className="btn btn--outline" onClick={resetForm}>Otkaži</button>
+            )}
           </div>
         </form>
       </div>
