@@ -4,7 +4,7 @@ namespace Quiz.Application.Feature.Admin.Quizzes.Commands.UpdateQuiz
 {
     public class UpdateQuizCommand : IRequest<UpdateQuizResponse>
     {
-        public string Id { get; set; } = default!;
+        public string? Id { get; set; } 
         public string Title { get; set; } = default!;
         public int CategoryId { get; set; } = default!;
         public string? Description { get; set; }

@@ -1,5 +1,5 @@
 import { createContext, useContext } from "react";
-import { AuthService } from "../services/auth.service";
+import { AuthService } from "../services/tokenService";
 
 const ServicesContext = createContext({ auth: AuthService });
 export const useServices = () => useContext(ServicesContext);

@@ -1,23 +1,21 @@
 import React from "react";
-import { Outlet, Link, useNavigate } from "react-router-dom";
-import { removeToken } from "../services/tokenService";
+import { Outlet } from "react-router-dom";
+import AdminHeader from "../components/Admin/AdminHeader.jsx";
+import AdminSidebar from "../components/Admin/AdminSidebar.jsx";
+import "../styles/admin.css"; // ⟵ VAŽNO: uvezi CSS ovdje
 
 export default function AdminLayout() {
-  const nav = useNavigate();
-  const logout = () => { localStorage.clear(); removeToken(); nav("/login", { replace: true }); };
-
   return (
-    <div style={{ maxWidth: 1100, margin: "0 auto", padding: 16 }}>
-      <nav style={{ display: "flex", gap: 12, marginBottom: 16 }}>
-        <Link to="/admin">Admin dashboard</Link>
-        <Link to="/admin/quizzes">Quizzes</Link>
-        <Link to="/admin/categories">Categories</Link>
-        <div style={{ marginLeft: "auto" }}>
-          <Link to="/">User app</Link>
-          <button style={{ marginLeft: 12 }} onClick={logout}>Logout</button>
+    <div className="admin-page">
+      <div className="admin-frame">
+        <AdminHeader />
+        <div className="admin-main">
+          <AdminSidebar />
+          <main className="content-frame">
+            <Outlet />
+          </main>
         </div>
-      </nav>
-      <Outlet />
+      </div>
     </div>
   );
 }
