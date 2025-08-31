@@ -73,19 +73,38 @@ builder.Services.AddSwaggerGen(c =>
 // =======================
 // CORS (dev-friendly)
 // =======================
-const string FrontendDevPolicy = "FrontendDev";
+//const string FrontendDevPolicy = "FrontendDev";
+
+//builder.Services.AddCors(options =>
+//{
+//    options.AddPolicy(FrontendDevPolicy, policy =>
+//    {
+//        // dozvoli React dev server
+//        policy.WithOrigins("http://localhost:3000", "https://localhost:3000")
+//              .AllowAnyHeader()
+//              .AllowAnyMethod();
+//        // Ako koristiš cookie auth, dodaj .AllowCredentials() i izbaci AllowAnyOrigin
+//    });
+//});
+
+const string FrontendDevPolicy = "_frontend";
 
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy(FrontendDevPolicy, policy =>
-    {
-        // dozvoli React dev server
-        policy.WithOrigins("http://localhost:3000", "https://localhost:3000")
-              .AllowAnyHeader()
-              .AllowAnyMethod();
-        // Ako koristiš cookie auth, dodaj .AllowCredentials() i izbaci AllowAnyOrigin
-    });
+    options.AddPolicy(FrontendDevPolicy, b => b
+        .WithOrigins(
+            "http://localhost:5173",
+            "http://127.0.0.1:5173",
+            "http://localhost:5174",
+            "http://127.0.0.1:5174"
+        )
+        .AllowAnyHeader()
+        .AllowAnyMethod()
+    // .AllowCredentials() // samo ako koristiš cookie auth; za Bearer nije potrebno
+    );
 });
+
+
 
 // =======================
 // Repositories (DI)
