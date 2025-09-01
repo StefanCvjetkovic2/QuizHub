@@ -1,5 +1,5 @@
 import React from "react";
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 
 import MainLayout   from "@/layouts/MainLayout.jsx";
 import PrivateRoute from "@/components/Route/PrivateRoute.jsx";
@@ -16,30 +16,70 @@ import QuizNewPage      from "@/pages/Admin/QuizNewPage.jsx";
 import QuizEditPage     from "@/pages/Admin/QuizEditPage.jsx";
 import CategoryNewPage  from "@/pages/Admin/CategoryNewPage.jsx";
 
-/* LAZY Questions stranice */
-const QuestionsAdminPage = React.lazy(() => import("@/pages/Admin/Questions/QuestionsAdminPage.jsx")); // globalna lista
-const QuizQuestionsPage  = React.lazy(() => import("@/pages/Admin/Questions/QuizQuestionsPage.jsx"));   // pitanja za jedan kviz
+// USER
+import QuizzesBrowsePage from "@/pages/User/QuizzesBrowsePage.jsx";
+import QuizPlayPage      from "@/pages/User/QuizPlayPage.jsx";
+import QuizResultPage    from "@/pages/User/QuizResultPage.jsx";
+
+// LAZY: Admin Questions
+const QuestionsAdminPage = React.lazy(() => import("@/pages/Admin/Questions/QuestionsAdminPage.jsx"));
+const QuizQuestionsPage  = React.lazy(() => import("@/pages/Admin/Questions/QuizQuestionsPage.jsx"));
 const QuestionNewPage    = React.lazy(() => import("@/pages/Admin/Questions/QuestionNewPage.jsx"));
 const QuestionEditPage   = React.lazy(() => import("@/pages/Admin/Questions/QuestionEditPage.jsx"));
 
 export default function MainRoutes() {
   return (
     <Routes>
-      {/* PUBLIC / AUTH */}
+      {/* ================= PUBLIC / USER (MainLayout) ================= */}
       <Route element={<MainLayout />}>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
+
+        {/* Ako je ulogovan, "/" vodi na /quizzes; inače PrivateRoute prebaci na /login */}
         <Route
           path="/"
           element={
             <PrivateRoute>
-              <HomePage />
+              <Navigate to="/quizzes" replace />
             </PrivateRoute>
           }
         />
+
+        {/* Pregled dostupnih kvizova (koristi quizPublicService) */}
+        <Route
+          path="/quizzes"
+          element={
+            <PrivateRoute>
+              <QuizzesBrowsePage />
+            </PrivateRoute>
+          }
+        />
+
+        {/* Igranje kviza */}
+        <Route
+          path="/quizzes/:quizId"
+          element={
+            <PrivateRoute>
+              <QuizPlayPage />
+            </PrivateRoute>
+          }
+        />
+
+        {/* Rezultat nakon kviza */}
+        <Route
+          path="/quizzes/:quizId/result"
+          element={
+            <PrivateRoute>
+              <QuizResultPage />
+            </PrivateRoute>
+          }
+        />
+
+        {/* (Opcionalno) backward-compat: redirect sa starog placeholdera */}
+        <Route path="/play/:quizId" element={<Navigate to="../quizzes/:quizId" replace />} />
       </Route>
 
-      {/* ADMIN */}
+      {/* ================= ADMIN (AdminLayout) ================= */}
       <Route element={<AdminLayout />}>
         <Route
           path="/admin"
@@ -50,7 +90,6 @@ export default function MainRoutes() {
           }
         />
 
-        {/* KVIZ CRUD */}
         <Route
           path="/admin/quizzes/new"
           element={
@@ -68,7 +107,7 @@ export default function MainRoutes() {
           }
         />
 
-        {/* GLOBALNA LISTA PITANJA + DODAVANJE/UREĐIVANJE */}
+        {/* Globalna lista / CRUD pitanja */}
         <Route
           path="/admin/questions"
           element={
@@ -94,7 +133,7 @@ export default function MainRoutes() {
           }
         />
 
-        {/* PITANJA ZA KONKRETAN KVIZ (ostavljamo ako ideš iz “Lista kvizova” → “Kreiraj pitanje”) */}
+        {/* Pitanja za konkretan kviz */}
         <Route
           path="/admin/quizzes/:quizId/questions"
           element={
@@ -120,7 +159,7 @@ export default function MainRoutes() {
           }
         />
 
-        {/* KATEGORIJE */}
+        {/* Kategorije */}
         <Route
           path="/admin/categories/new"
           element={
@@ -130,6 +169,9 @@ export default function MainRoutes() {
           }
         />
       </Route>
+
+      {/* 404 → /quizzes */}
+      <Route path="*" element={<Navigate to="/quizzes" replace />} />
     </Routes>
   );
 }

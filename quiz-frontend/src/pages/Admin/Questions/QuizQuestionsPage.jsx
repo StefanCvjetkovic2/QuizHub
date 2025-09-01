@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import { getQuizDetail } from "../../../services/quizService";
 import { deleteQuestion } from "../../../services/questionsService";
@@ -33,12 +33,30 @@ export default function QuizQuestionsPage() {
     }
   };
 
+  // sortiraj za prikaz
+  const itemsSorted = useMemo(() => {
+    const arr = Array.isArray(quiz?.questions) ? [...quiz.questions] : [];
+    return arr.sort((a,b) => (a.order ?? 0) - (b.order ?? 0));
+  }, [quiz]);
+
+  // izračunaj nextOrder iz već učitanih pitanja
+  const nextOrder = useMemo(() => {
+    const max = itemsSorted.reduce((m,q) => Math.max(m, Number.isFinite(q.order) ? q.order : 0), 0);
+    return (max || itemsSorted.length) + 1;
+  }, [itemsSorted]);
+
   return (
     <div>
       <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:12}}>
         <h2 style={{fontSize:22, fontWeight:800}}>Pitanja za kviz</h2>
         <div style={{display:"flex", gap:8}}>
-          <Link className="btn btn-blue" to={`/admin/quizzes/${quizId}/questions/new`}>+ Dodaj pitanje</Link>
+          <Link
+            className="btn btn-blue"
+            to={`/admin/quizzes/${quizId}/questions/new`}
+            state={{ nextOrder }}                 // <— PROSLEĐUJEMO
+          >
+            + Dodaj pitanje
+          </Link>
           <Link className="btn btn-amber" to="/admin">Nazad na kvizove</Link>
         </div>
       </div>
@@ -54,7 +72,7 @@ export default function QuizQuestionsPage() {
 
       <QuestionsTable
         loading={loading}
-        items={quiz?.questions ?? []}
+        items={itemsSorted}
         onEdit={(questionId) => nav(`/admin/quizzes/${quizId}/questions/${questionId}/edit`)}
         onDelete={onDelete}
       />
