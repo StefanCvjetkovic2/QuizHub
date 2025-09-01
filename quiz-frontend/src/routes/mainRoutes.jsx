@@ -20,6 +20,8 @@ import CategoryNewPage  from "@/pages/Admin/CategoryNewPage.jsx";
 import QuizzesBrowsePage from "@/pages/User/QuizzesBrowsePage.jsx";
 import QuizPlayPage      from "@/pages/User/QuizPlayPage.jsx";
 import QuizResultPage    from "@/pages/User/QuizResultPage.jsx";
+import MyResultsPage from "@/pages/User/MyResultsPage";
+import ResultDetailsPage from "@/pages/User/ResultDetailsPage";
 
 // LAZY: Admin Questions
 const QuestionsAdminPage = React.lazy(() => import("@/pages/Admin/Questions/QuestionsAdminPage.jsx"));
@@ -75,6 +77,8 @@ export default function MainRoutes() {
           }
         />
 
+<Route path="/my-results" element={<MyResultsPage />} />
+<Route path="/results/:resultId" element={<ResultDetailsPage />} />
         {/* (Opcionalno) backward-compat: redirect sa starog placeholdera */}
         <Route path="/play/:quizId" element={<Navigate to="../quizzes/:quizId" replace />} />
       </Route>

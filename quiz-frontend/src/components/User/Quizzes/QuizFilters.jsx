@@ -49,7 +49,7 @@ export default function QuizFilters({
         </div>
 
         <button className="btn btn-blue" onClick={onApply}>
-          Primijeni
+          Primjeni
         </button>
         <button className="btn btn-amber" onClick={onReset}>
           Reset

@@ -46,6 +46,196 @@ namespace Quiz.Api.Controllers
             return x is "true" or "tačno" or "tacno";
         }
 
+
+        // ====== DODAJ OVO U ResultsController ======
+
+        public record MyResultItemDto(
+            string Id,
+            string QuizId,
+            string QuizTitle,
+            int Score,
+            int Total,
+            float Percentage,
+            int TimeTakenSeconds,
+            DateTime DateTaken
+        );
+
+        public record PagedDto<T>(IEnumerable<T> Items, int Total, int Page, int PageSize);
+
+        public record ResultDetailsDto(
+            string ResultId,
+            string QuizId,
+            string QuizTitle,
+            int Correct,
+            int Total,
+            float Percentage,
+            int TimeTakenSeconds,
+            DateTime DateTaken,
+            IEnumerable<QuestionResultDto> Details
+        );
+
+        // GET /api/results/my?page=1&pageSize=50&quizId=...
+        [HttpGet("my")]
+        public async Task<ActionResult<PagedDto<MyResultItemDto>>> GetMyResults(
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 50,
+            [FromQuery] string? quizId = null,
+            CancellationToken ct = default
+        )
+        {
+            var userId =
+                User.FindFirst(ClaimTypes.NameIdentifier)?.Value ??
+                User.FindFirst("sub")?.Value ??
+                User.Identity?.Name ?? string.Empty;
+
+            var query = _ctx.QuizResults
+                .AsNoTracking()
+                .Include(r => r.Quiz)!.ThenInclude(q => q.Questions)
+                .Where(r => r.UserId == userId);
+
+            if (!string.IsNullOrWhiteSpace(quizId))
+                query = query.Where(r => r.QuizId == quizId);
+
+            var total = await query.CountAsync(ct);
+
+            var items = await query
+                .OrderByDescending(r => r.DateTaken)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .Select(r => new MyResultItemDto(
+                    r.Id,
+                    r.QuizId,
+                    r.Quiz!.Title,
+                    r.Score,
+                    r.Quiz!.Questions.Count,
+                    r.Percentage,
+                    r.TimeTakenSeconds,
+                    r.DateTaken
+                ))
+                .ToListAsync(ct);
+
+            return Ok(new PagedDto<MyResultItemDto>(items, total, page, pageSize));
+        }
+
+        // GET /api/results/{id}
+        [HttpGet("{id}")]
+        public async Task<ActionResult<ResultDetailsDto>> GetResult(string id, CancellationToken ct)
+        {
+            var userId =
+                User.FindFirst(ClaimTypes.NameIdentifier)?.Value ??
+                User.FindFirst("sub")?.Value ??
+                User.Identity?.Name ?? string.Empty;
+
+            var res = await _ctx.QuizResults
+                .Include(r => r.Quiz)!.ThenInclude(q => q.Questions)!.ThenInclude(q => q.Answers)
+                .Include(r => r.UserAnswers)
+                .FirstOrDefaultAsync(r => r.Id == id, ct);
+
+            if (res == null) return NotFound();
+            if (res.UserId != userId) return Forbid();
+
+            var details = new List<QuestionResultDto>();
+            int correctCount = 0;
+
+            foreach (var q in res.Quiz!.Questions.OrderBy(x => x.Order))
+            {
+                var ua = res.UserAnswers.FirstOrDefault(x => x.QuestionId == q.Id);
+
+                var correctIds = q.Answers.Where(a => a.IsCorrect).Select(a => a.Id).ToList();
+                var correctTexts = q.Answers.Where(a => a.IsCorrect)
+                                            .Select(a => a.Text ?? "")
+                                            .Where(t => !string.IsNullOrWhiteSpace(t))
+                                            .ToList();
+
+                var userSelectedIds = new List<string>();
+                string? userText = null;
+                bool isCorrect = false;
+
+                switch (q.Type)
+                {
+                    case QuestionTypes.Single:
+                        {
+                            var ids = (ua?.AnswerText ?? "")
+                                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+                            if (ids.Length == 1)
+                            {
+                                userSelectedIds.Add(ids[0]);
+                                isCorrect = correctIds.Contains(ids[0]);
+                            }
+                            break;
+                        }
+                    case QuestionTypes.Multiple:
+                        {
+                            var ids = (ua?.AnswerText ?? "")
+                                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+                            userSelectedIds.AddRange(ids);
+                            var setUser = userSelectedIds.ToHashSet();
+                            var setCorrect = correctIds.ToHashSet();
+                            isCorrect = setUser.SetEquals(setCorrect);
+                            break;
+                        }
+                    case QuestionTypes.TrueFalse:
+                        {
+                            var txt = (ua?.AnswerText ?? "").Trim().ToLowerInvariant();
+
+                            // mogao je biti upisan id ili tekst "true/false"/"tačno"/"netačno"
+                            if (!string.IsNullOrEmpty(txt) && q.Answers.Any(a => a.Id == txt))
+                            {
+                                userSelectedIds.Add(txt);
+                                isCorrect = correctIds.Contains(txt);
+                            }
+                            else
+                            {
+                                userText = txt;
+                                var corrAns = q.Answers.FirstOrDefault(a => a.IsCorrect);
+                                bool corrTrue = IsTrueLabel(corrAns?.Text) ||
+                                    (corrAns?.Text ?? "").Trim().Equals("True", StringComparison.OrdinalIgnoreCase);
+                                bool chosenTrue = IsTrueLabel(userText);
+                                isCorrect = chosenTrue == corrTrue;
+                            }
+                            break;
+                        }
+                    case QuestionTypes.FillIn:
+                        {
+                            userText = (ua?.AnswerText ?? "");
+                            isCorrect = q.Answers.Any(a =>
+                                string.Equals(a.Text?.Trim(), userText.Trim(), StringComparison.OrdinalIgnoreCase));
+                            break;
+                        }
+                }
+
+                if (isCorrect) correctCount++;
+
+                details.Add(new QuestionResultDto
+                {
+                    QuestionId = q.Id,
+                    IsCorrect = isCorrect,
+                    CorrectAnswerIds = correctIds,
+                    CorrectAnswerTexts = correctTexts,
+                    UserSelectedAnswerIds = userSelectedIds,
+                    UserText = userText
+                });
+            }
+
+            var dto = new ResultDetailsDto(
+                res.Id,
+                res.QuizId,
+                res.Quiz.Title,
+                correctCount,
+                res.Quiz.Questions.Count,
+                res.Percentage,
+                res.TimeTakenSeconds,
+                res.DateTaken,
+                details
+            );
+
+            return Ok(dto);
+        }
+
+
+
+
+
         [HttpPost]
         public async Task<IActionResult> Submit([FromBody] SubmitQuizRequest req, CancellationToken ct)
         {
