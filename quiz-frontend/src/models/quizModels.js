@@ -32,3 +32,11 @@ export function mapQuiz(dto = {}) {
       null,
   };
 }
+export function normalizeType(t) {
+  const s = String(t || "").toLowerCase();
+  if (s.includes("truefalse") || s === "tf" || s === "boolean" || s === "bool") return "boolean";
+  if (s.includes("single")) return "single";
+  if (s.includes("multiple")) return "multiple";
+  if (s.includes("fill") || s.includes("text") || s.includes("unos")) return "text";
+  return s;
+}
