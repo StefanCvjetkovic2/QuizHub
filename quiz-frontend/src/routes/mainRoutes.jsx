@@ -20,8 +20,13 @@ import CategoryNewPage  from "@/pages/Admin/CategoryNewPage.jsx";
 import QuizzesBrowsePage from "@/pages/User/QuizzesBrowsePage.jsx";
 import QuizPlayPage      from "@/pages/User/QuizPlayPage.jsx";
 import QuizResultPage    from "@/pages/User/QuizResultPage.jsx";
-import MyResultsPage from "@/pages/User/MyResultsPage";
+import MyResultsPage     from "@/pages/User/MyResultsPage";
 import ResultDetailsPage from "@/pages/User/ResultDetailsPage";
+import LeaderboardPage   from "@/pages/User/LeaderboardPage";
+
+// ⬇️ ADMIN: pregled rezultata (NOVO)
+import AdminResultsPage        from "@/pages/Admin/Results/AdminResultsPage.jsx";
+
 
 // LAZY: Admin Questions
 const QuestionsAdminPage = React.lazy(() => import("@/pages/Admin/Questions/QuestionsAdminPage.jsx"));
@@ -32,10 +37,11 @@ const QuestionEditPage   = React.lazy(() => import("@/pages/Admin/Questions/Ques
 export default function MainRoutes() {
   return (
     <Routes>
-      {/* ================= PUBLIC / USER (MainLayout) ================= */}
+      
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/register" element={<RegisterPage />} />
+
       <Route element={<MainLayout />}>
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/register" element={<RegisterPage />} />
 
         {/* Ako je ulogovan, "/" vodi na /quizzes; inače PrivateRoute prebaci na /login */}
         <Route
@@ -77,8 +83,10 @@ export default function MainRoutes() {
           }
         />
 
-<Route path="/my-results" element={<MyResultsPage />} />
-<Route path="/results/:resultId" element={<ResultDetailsPage />} />
+        <Route path="/my-results" element={<MyResultsPage />} />
+        <Route path="/results/:resultId" element={<ResultDetailsPage />} />
+        <Route path="/leaderboard" element={<LeaderboardPage />} />
+
         {/* (Opcionalno) backward-compat: redirect sa starog placeholdera */}
         <Route path="/play/:quizId" element={<Navigate to="../quizzes/:quizId" replace />} />
       </Route>
@@ -172,6 +180,17 @@ export default function MainRoutes() {
             </AdminRoute>
           }
         />
+
+        {/* ⬇️ NOVO: Admin pregled rezultata */}
+        <Route
+          path="/admin/results"
+          element={
+            <AdminRoute>
+              <AdminResultsPage />
+            </AdminRoute>
+          }
+        />
+       
       </Route>
 
       {/* 404 → /quizzes */}

@@ -64,7 +64,11 @@ export default function MainLayout() {
           
           <NavLink to="/quizzes" style={linkStyle}>Kvizovi</NavLink>
           <NavLink to="/my-results" style={linkStyle}>Moji rezultati</NavLink>
+          <NavLink to="/leaderboard" style={linkStyle}>Rang lista</NavLink>
+         
         </div>
+
+        
 
         {/* Desno: Logout */}
         <div style={{ display: "flex", gap: 8, justifySelf: "end" }}>

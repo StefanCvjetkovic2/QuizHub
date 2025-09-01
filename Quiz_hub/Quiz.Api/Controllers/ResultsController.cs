@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Quiz.Domain.Entities;
 using Quiz.Domain.Constants;
 using Quiz.Infrastructure.Data;
+using Microsoft.AspNetCore.Identity;
 
 namespace Quiz.Api.Controllers
 {
@@ -373,5 +374,120 @@ namespace Quiz.Api.Controllers
                 details   // ⬅ FE koristi ovo za prikaz
             });
         }
+
+        public record LeaderboardItemDto
+        {
+            public int Rank { get; init; }
+            public string UserId { get; init; } = "";
+            public string UserName { get; init; } = ""; // fallback na anonimno ako nemamo ime
+            public string QuizId { get; init; } = "";
+            public string QuizTitle { get; init; } = "";
+            public int Score { get; init; }
+            public int Total { get; init; }
+            public int Percentage { get; init; }
+            public int? TimeTakenSeconds { get; init; }
+            public DateTime DateTaken { get; init; }
+            public bool IsYou { get; init; }
+        }
+
+        public record LeaderboardResponse
+        {
+            public List<LeaderboardItemDto> Items { get; init; } = new();
+            public int Total { get; init; }
+            public int Page { get; init; }
+            public int PageSize { get; init; }
+            public int? YourRank { get; init; }     // pozicija u trenutnom preseku
+        }
+
+        /// <summary>
+        /// GET api/results/leaderboard?quizId=...&period=week|month|all&page=1&pageSize=50
+        /// period:
+        ///   - week  => poslednjih 7 dana
+        ///   - month => poslednjih 30 dana
+        ///   - all   => bez vremenskog filtra
+        /// Rangiranje: Score desc, Percentage desc, TimeTakenSeconds asc, DateTaken asc.
+        /// U listu ulazi NAJBOLJI pokušaj po korisniku (po istim kriterijumima).
+        /// </summary>
+
+        [HttpGet("leaderboard")]
+        public async Task<IActionResult> Leaderboard(
+      [FromQuery] string quizId,
+      [FromQuery] string period = "all",
+      [FromQuery] int page = 1,
+      [FromQuery] int pageSize = 50,
+      CancellationToken ct = default)
+        {
+            if (string.IsNullOrWhiteSpace(quizId))
+                return BadRequest("quizId is required.");
+
+            page = Math.Max(1, page);
+            pageSize = Math.Clamp(pageSize, 1, 100);
+
+            var now = DateTime.UtcNow;
+            DateTime? from = period switch
+            {
+                "week" => now.AddDays(-7),
+                "month" => now.AddMonths(-1),
+                _ => null
+            };
+
+            // ukupno pitanja za kviz (za kolonu "5 / 5")
+            var quiz = await _ctx.Quizzes
+                .Include(q => q.Questions)
+                .AsNoTracking()
+                .FirstOrDefaultAsync(q => q.Id == quizId, ct);
+            if (quiz is null) return NotFound();
+            var totalQuestions = quiz.Questions.Count;
+
+            var baseQuery = _ctx.QuizResults
+                .AsNoTracking()
+                .Where(r => r.QuizId == quizId);
+
+            if (from is not null)
+                baseQuery = baseQuery.Where(r => r.DateTaken >= from.Value);
+
+            // ⬇⬇⬇ JOIN na korisnike da uzmemo pravo korisničko ime
+            var query =
+                from r in baseQuery
+                join u in _ctx.Users.AsNoTracking() on r.UserId equals u.Id
+                select new
+                {
+                    r.UserId,
+                    UserName = u.Username,               // ← OVO VRATI
+                    r.Score,
+                    r.Percentage,
+                    r.TimeTakenSeconds,
+                    r.DateTaken
+                };
+
+            // sortiranje: procenat ↓, vreme ↑, datum ↑
+            query = query.OrderByDescending(x => x.Percentage)
+                         .ThenBy(x => x.TimeTakenSeconds)
+                         .ThenBy(x => x.DateTaken);
+
+            var total = await query.CountAsync(ct);
+            var rows = await query.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync(ct);
+
+            var items = rows.Select((x, i) => new
+            {
+                rank = (page - 1) * pageSize + (i + 1),
+                userId = x.UserId,
+                userName = string.IsNullOrWhiteSpace(x.UserName) ? $"user_{x.UserId[..Math.Min(6, x.UserId.Length)]}" : x.UserName,
+                score = x.Score,
+                total = totalQuestions,
+                percentage = x.Percentage,
+                timeTakenSeconds = x.TimeTakenSeconds ,
+                dateTaken = x.DateTaken
+            });
+
+            return Ok(new { items, total, page, pageSize });
+        }
+
+
+
+
+
     }
+
+
 }

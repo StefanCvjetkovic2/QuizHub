@@ -1,10 +1,7 @@
 import React from "react";
+import AuthLayout from "@/layouts/AuthLayout";
 import RegisterForm from "./RegisterForm";
 
 export default function Register() {
-  return (
-    <div className="flex items-center justify-center min-h-screen bg-blue-50 px-4">
-      <RegisterForm />
-    </div>
-  );
+  return <AuthLayout subtitle="Kreiraj nalog i počni sa kvizovima"><RegisterForm /></AuthLayout>;
 }
