@@ -1,8 +1,8 @@
-// src/pages/User/QuizPlayPage.jsx
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { getPublicQuizDetail } from "@/services/quizPublicService";
 import { submitQuiz } from "@/services/resultsService";
+import { getResultDetails } from "@/services/resultsService";
 
 function fmt(sec) {
   if (!sec || sec < 0) sec = 0;
@@ -11,7 +11,6 @@ function fmt(sec) {
   return `${m}:${String(s).padStart(2, "0")}`;
 }
 
-// ⬇️ Normalizacija tipa da pokrije TrueFalse/boolean/bool/…
 function normalizeType(t) {
   const s = String(t || "").toLowerCase();
   if (s.includes("truefalse") || s === "tf" || s === "boolean" || s === "bool") return "boolean";
@@ -29,11 +28,12 @@ export default function QuizPlayPage() {
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState("");
 
-  // navigacija pitanja
   const [idx, setIdx] = useState(0);
+  const [answers, setAnswers] = useState({});       // { [qid]: { type, selectedIds:Set, text } }
 
-  // odgovori: map qid -> { type, selectedIds: Set<string>, text?: string }
-  const [answers, setAnswers] = useState({});
+  // ⬇ držimo NAJNOVIJE odgovore u ref-u da auto-submit ne koristi “stari” state
+  const answersRef = useRef({});
+  useEffect(() => { answersRef.current = answers; }, [answers]);
 
   // tajmer
   const [remaining, setRemaining] = useState(null);
@@ -48,14 +48,9 @@ export default function QuizPlayPage() {
         const limit = Number.parseInt(qd.timeLimitSeconds, 10) || 0;
         setRemaining(limit > 0 ? limit : null);
 
-        // init answers
         const init = {};
         for (const q of qd.questions) {
-          init[q.id] = {
-            type: normalizeType(q.type),   // ⬅️ normalizovan tip
-            selectedIds: new Set(),
-            text: "",
-          };
+          init[q.id] = { type: normalizeType(q.type), selectedIds: new Set(), text: "" };
         }
         setAnswers(init);
       } catch (e) {
@@ -66,25 +61,27 @@ export default function QuizPlayPage() {
     })();
   }, [quizId]);
 
-  // pokretanje tajmera
+  // tajmer + AUTO-SUBMIT sa NAJNOVIJIM ODGOVORIMA (answersRef.current)
   useEffect(() => {
     if (!quiz) return;
     const limit = Number.parseInt(quiz.timeLimitSeconds, 10) || 0;
     if (limit <= 0) return; // bez tajmera
+
     timerRef.current = setInterval(() => {
       setRemaining((prev) => {
         if (prev === null) return null;
         if (prev <= 1) {
           clearInterval(timerRef.current);
-          // auto-submit
-          handleSubmit(true);
+          handleSubmit(true); // koristi answersRef.current
           return 0;
         }
         elapsedRef.current += 1;
         return prev - 1;
       });
     }, 1000);
+
     return () => clearInterval(timerRef.current);
+    // namjerno: zavisimo samo od quiz?.id da se timer ne resetuje dok korisnik odgovara
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [quiz?.id]);
 
@@ -93,7 +90,7 @@ export default function QuizPlayPage() {
   const setRadio = (qid, aid) => {
     setAnswers((prev) => {
       const cur = prev[qid] ?? { type: "single", selectedIds: new Set(), text: "" };
-      return { ...prev, [qid]: { ...cur, selectedIds: new Set([aid]), text: "" } };
+      return { ...prev, [qid]: { ...cur, selectedIds: new Set([String(aid)]), text: "" } };
     });
   };
 
@@ -101,7 +98,8 @@ export default function QuizPlayPage() {
     setAnswers((prev) => {
       const cur = prev[qid] ?? { type: "multiple", selectedIds: new Set(), text: "" };
       const next = new Set(cur.selectedIds);
-      next.has(aid) ? next.delete(aid) : next.add(aid);
+      const key = String(aid);
+      next.has(key) ? next.delete(key) : next.add(key);
       return { ...prev, [qid]: { ...cur, selectedIds: next, text: "" } };
     });
   };
@@ -113,7 +111,6 @@ export default function QuizPlayPage() {
     });
   };
 
-  // ⬇️ True/False — fallback kada nema ID-eva odgovora
   const setTrueFalseText = (qid, val /* "true" | "false" */) => {
     setAnswers((prev) => {
       const cur = prev[qid] ?? { type: "boolean", selectedIds: new Set(), text: "" };
@@ -128,55 +125,68 @@ export default function QuizPlayPage() {
     });
   };
 
+  // ⬇ helper: složi payload iz NAJNOVIJIH odgovora u refu
+  const buildPayload = () => {
+    const curAnswers = answersRef.current || {};
+    return {
+      quizId: quiz.id,
+      elapsedSeconds:
+        (quiz.timeLimitSeconds && quiz.timeLimitSeconds > 0)
+          ? (Number.parseInt(quiz.timeLimitSeconds, 10) - (remaining ?? 0))
+          : elapsedRef.current,
+      answers: quiz.questions.map((qq) => {
+        const t = normalizeType(qq.type);
+        const a = curAnswers[qq.id] ?? { type: t, selectedIds: new Set(), text: "" };
+
+        if (t === "text") {
+          return { questionId: qq.id, text: a.text ?? "" };
+        }
+
+        if (t === "boolean") {
+          const ids = Array.from(a.selectedIds ?? []);
+          if (ids.length > 0) return { questionId: qq.id, selectedAnswerIds: ids.map(String) };
+          if ((a.text ?? "") !== "") return { questionId: qq.id, text: a.text };
+          return { questionId: qq.id, selectedAnswerIds: [] };
+        }
+
+        return { questionId: qq.id, selectedAnswerIds: Array.from(a.selectedIds ?? []).map(String) };
+      }),
+    };
+  };
+
   const handleSubmit = async (auto = false) => {
     if (!quiz) return;
     try {
-      const elapsed =
-        (quiz.timeLimitSeconds && quiz.timeLimitSeconds > 0)
-          ? (Number.parseInt(quiz.timeLimitSeconds, 10) - (remaining ?? 0))
-          : elapsedRef.current;
-
-      // složi payload
-      const payload = {
-        quizId: quiz.id,
-        elapsedSeconds: Math.max(0, Number.parseInt(elapsed, 10) || 0),
-        answers: quiz.questions.map((qq) => {
-          const t = normalizeType(qq.type);
-          const a = answers[qq.id] ?? { type: t, selectedIds: new Set(), text: "" };
-
-          if (t === "text") {
-            return { questionId: qq.id, text: a.text ?? "" };
-          }
-
-          if (t === "boolean") {
-            // ako imamo izabrani ID → šaljemo SelectedAnswerIds
-            const ids = Array.from(a.selectedIds ?? []);
-            if (ids.length > 0) {
-              return { questionId: qq.id, selectedAnswerIds: ids };
-            }
-            // fallback: šaljemo "true"/"false" u Text
-            if ((a.text ?? "") !== "") {
-              return { questionId: qq.id, text: a.text };
-            }
-            return { questionId: qq.id, selectedAnswerIds: [] };
-          }
-
-          // single/multiple → id-evi
-          return {
-            questionId: qq.id,
-            selectedAnswerIds: Array.from(a.selectedIds ?? []),
-          };
-        }),
-      };
+      const payload = buildPayload();
+      // saniraj vrijeme (negativno -> 0)
+      payload.elapsedSeconds = Math.max(0, Number.parseInt(payload.elapsedSeconds, 10) || 0);
 
       const res = await submitQuiz(payload);
-      // idi na rezultat
+
+      // pokušaj dovući detalje ako BE ne vrati inline (ok je i ako vrati)
+      let details = [];
+      try {
+        if (res?.resultId) {
+          details = await getResultDetails(res.resultId);
+        }
+        const inline =
+          res?.details ||
+          res?.questionResults ||
+          res?.perQuestion ||
+          res?.items ||
+          res?.questions ||
+          res?.results ||
+          [];
+        if (Array.isArray(inline) && inline.length && details.length === 0) details = inline;
+      } catch (_) {}
+
       nav(`/quizzes/${quiz.id}/result`, {
         replace: true,
         state: {
-          summary: res,
+          summary: { ...res, details },
           quizTitle: quiz.title,
-          quizQuestions: quiz.questions,        // za highlight
+          quizQuestions: quiz.questions,
+          // čuvamo i korisnikove za fallback prikaz (nije obavezno, ali pomaže)
           userAnswers: payload.answers,
         },
       });
@@ -195,7 +205,7 @@ export default function QuizPlayPage() {
 
   return (
     <div>
-      {/* Header sa naslovom i tajmerom */}
+      {/* Header */}
       <div style={{
         display: "grid",
         gridTemplateColumns: "1fr auto auto",
@@ -205,7 +215,6 @@ export default function QuizPlayPage() {
       }}>
         <h2 style={{ fontWeight: 900, fontSize: 26, margin: 0 }}>{quiz.title}</h2>
 
-        {/* tajmer (ako postoji) */}
         <div style={{ justifySelf: "end" }}>
           {quiz.timeLimitSeconds > 0 ? (
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -224,7 +233,6 @@ export default function QuizPlayPage() {
           )}
         </div>
 
-        {/* predaja/odustani */}
         <div style={{ display: "flex", gap: 8, justifySelf: "end" }}>
           <button className="btn btn-amber" onClick={() => {
             if (confirm("Odustati od kviza? Nepošlati odgovore.")) {
@@ -237,7 +245,7 @@ export default function QuizPlayPage() {
         </div>
       </div>
 
-      {/* linijski progres */}
+      {/* progress bar */}
       <div style={{ height: 8, background: "rgba(148,163,184,.25)", borderRadius: 999 }}>
         <div style={{
           width: `${progress}%`,
@@ -248,7 +256,7 @@ export default function QuizPlayPage() {
         }} />
       </div>
 
-      {/* telo pitanja */}
+      {/* pitanje */}
       {q && (
         <div
           className="card"
@@ -265,11 +273,10 @@ export default function QuizPlayPage() {
           </div>
           <div style={{ fontSize: 20, fontWeight: 700, marginBottom: 12 }}>{q.text}</div>
 
-          {/* rendere zavisno od tipa */}
           {normalizeType(q.type) === "single" && (
             <div style={{ display: "grid", gap: 8 }}>
               {q.answers.map(a => {
-                const checked = answers[q.id]?.selectedIds?.has(a.id);
+                const checked = answers[q.id]?.selectedIds?.has(String(a.id));
                 return (
                   <label key={a.id} className="option" style={{ display: "flex", gap: 8, alignItems: "center" }}>
                     <input
@@ -288,7 +295,7 @@ export default function QuizPlayPage() {
           {normalizeType(q.type) === "multiple" && (
             <div style={{ display: "grid", gap: 8 }}>
               {q.answers.map(a => {
-                const checked = answers[q.id]?.selectedIds?.has(a.id);
+                const checked = answers[q.id]?.selectedIds?.has(String(a.id));
                 return (
                   <label key={a.id} className="option" style={{ display: "flex", gap: 8, alignItems: "center" }}>
                     <input
@@ -311,7 +318,7 @@ export default function QuizPlayPage() {
               ]).map(o => {
                 const hasIds = q.answers?.length === 2;
                 const checked = hasIds
-                  ? !!answers[q.id]?.selectedIds?.has(o.id)
+                  ? !!answers[q.id]?.selectedIds?.has(String(o.id))
                   : (answers[q.id]?.text === o.flag);
                 const onChange = () => {
                   if (hasIds) setRadio(q.id, o.id);
@@ -319,12 +326,7 @@ export default function QuizPlayPage() {
                 };
                 return (
                   <label key={o.id} className="option" style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                    <input
-                      type="radio"
-                      name={`q-tf-${q.id}`}
-                      checked={checked}
-                      onChange={onChange}
-                    />
+                    <input type="radio" name={`q-tf-${q.id}`} checked={checked} onChange={onChange} />
                     <span>{o.text}</span>
                   </label>
                 );
@@ -354,8 +356,7 @@ export default function QuizPlayPage() {
       <div style={{ marginTop: 12, display: "flex", flexWrap: "wrap", gap: 6 }}>
         {quiz.questions.map((qq, i) => {
           const a = answers[qq.id] || {};
-          const answered =
-            ((a.selectedIds?.size ?? 0) > 0) || ((a.text ?? "").trim() !== ""); // ⬅️ sada pokriva i TF tekst
+          const answered = ((a.selectedIds?.size ?? 0) > 0) || ((a.text ?? "").trim() !== "");
           return (
             <button
               key={qq.id}

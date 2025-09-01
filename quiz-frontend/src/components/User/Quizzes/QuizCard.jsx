@@ -40,9 +40,14 @@ export default function QuizCard({ quiz, onStart }) {
         </div>
       </div>
 
-      <button className="btn btn-blue" onClick={onStart}>
-        Pokreni kviz
-      </button>
+      
+<button
+  className="btn btn-blue"
+  onClick={() => nav(`/quizzes/${item.id}`)}   // <— IDE NA PLAY, NE NA /result
+>
+  Pokreni kviz
+</button>
+
     </div>
   );
 }

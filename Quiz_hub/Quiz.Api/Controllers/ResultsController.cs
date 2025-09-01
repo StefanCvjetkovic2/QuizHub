@@ -3,28 +3,23 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Quiz.Domain.Entities;
-using Quiz.Domain.Constants;           // QuestionTypes
+using Quiz.Domain.Constants;
 using Quiz.Infrastructure.Data;
 
 namespace Quiz.Api.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize] // vezujemo rezultat za ulogovanog korisnika
+    [Authorize]
     public class ResultsController : ControllerBase
     {
         private readonly QuizDbContext _ctx;
         public ResultsController(QuizDbContext ctx) => _ctx = ctx;
 
-        // ===== DTO-i koje prima front =====
         public record SubmittedAnswer
         {
             public string QuestionId { get; init; } = string.Empty;
-
-            // Za Single/Multiple/TrueFalse možeš poslati Id-eve odabranih odgovora
             public string[]? SelectedAnswerIds { get; init; }
-
-            // Za TrueFalse (ako ne šalješ Id) i za FillInTheBlank
             public string? Text { get; init; }
         }
 
@@ -35,105 +30,134 @@ namespace Quiz.Api.Controllers
             public List<SubmittedAnswer> Answers { get; init; } = new();
         }
 
+        public record QuestionResultDto
+        {
+            public string QuestionId { get; init; } = string.Empty;
+            public bool IsCorrect { get; init; }
+            public List<string> CorrectAnswerIds { get; init; } = new();
+            public List<string> CorrectAnswerTexts { get; init; } = new();
+            public List<string> UserSelectedAnswerIds { get; init; } = new();
+            public string? UserText { get; init; }
+        }
+
+        private static bool IsTrueLabel(string? s)
+        {
+            var x = (s ?? "").Trim().ToLowerInvariant();
+            return x is "true" or "tačno" or "tacno";
+        }
+
         [HttpPost]
         public async Task<IActionResult> Submit([FromBody] SubmitQuizRequest req, CancellationToken ct)
         {
             var quiz = await _ctx.Quizzes
-                .Include(q => q.Questions)
-                    .ThenInclude(q => q.Answers)
+                .Include(q => q.Questions).ThenInclude(q => q.Answers)
                 .FirstOrDefaultAsync(q => q.Id == req.QuizId, ct);
 
-            if (quiz is null)
-                return NotFound(new { message = "Quiz not found." });
+            if (quiz is null) return NotFound(new { message = "Quiz not found." });
 
             int total = quiz.Questions.Count;
             int correct = 0;
+
             var userAnswers = new List<UserAnswer>();
+            var details = new List<QuestionResultDto>();
 
             foreach (var q in quiz.Questions.OrderBy(x => x.Order))
             {
                 var provided = req.Answers.FirstOrDefault(a => a.QuestionId == q.Id);
-                if (provided is null)
-                {
-                    userAnswers.Add(new UserAnswer { QuestionId = q.Id, AnswerText = "" });
-                    continue;
-                }
 
                 bool isCorrect = false;
+                var correctIds = q.Answers.Where(a => a.IsCorrect).Select(a => a.Id).ToList();
+                var correctTexts = q.Answers.Where(a => a.IsCorrect).Select(a => a.Text ?? "")
+                                            .Where(t => !string.IsNullOrWhiteSpace(t)).ToList();
+
+                var userSelectedIds = new List<string>();
+                string? userText = null;
 
                 switch (q.Type)
                 {
                     case QuestionTypes.Single:
                         {
-                            var sel = (provided.SelectedAnswerIds ?? Array.Empty<string>()).FirstOrDefault();
-                            isCorrect = !string.IsNullOrWhiteSpace(sel)
-                                        && q.Answers.Any(a => a.Id == sel && a.IsCorrect);
-                            userAnswers.Add(new UserAnswer
+                            var sel = (provided?.SelectedAnswerIds ?? Array.Empty<string>()).FirstOrDefault();
+                            if (!string.IsNullOrWhiteSpace(sel))
                             {
-                                QuestionId = q.Id,
-                                AnswerText = string.Join(",", provided.SelectedAnswerIds ?? Array.Empty<string>())
-                            });
+                                userSelectedIds.Add(sel);
+                                isCorrect = correctIds.Contains(sel);
+                            }
+                            userAnswers.Add(new UserAnswer { QuestionId = q.Id, AnswerText = string.Join(",", userSelectedIds) });
                             break;
                         }
+
                     case QuestionTypes.Multiple:
                         {
-                            var selected = new HashSet<string>((provided.SelectedAnswerIds ?? Array.Empty<string>())
-                                                                .Where(s => !string.IsNullOrWhiteSpace(s)));
-                            var correctSet = q.Answers.Where(a => a.IsCorrect).Select(a => a.Id).ToHashSet();
-                            isCorrect = selected.SetEquals(correctSet); // mora potpuni set-match
-
-                            userAnswers.Add(new UserAnswer
-                            {
-                                QuestionId = q.Id,
-                                AnswerText = string.Join(",", selected)
-                            });
+                            var selected = new HashSet<string>((provided?.SelectedAnswerIds ?? Array.Empty<string>())
+                                                               .Where(s => !string.IsNullOrWhiteSpace(s)));
+                            userSelectedIds.AddRange(selected);
+                            var correctSet = correctIds.ToHashSet();
+                            isCorrect = selected.SetEquals(correctSet);
+                            userAnswers.Add(new UserAnswer { QuestionId = q.Id, AnswerText = string.Join(",", userSelectedIds) });
                             break;
                         }
+
                     case QuestionTypes.TrueFalse:
                         {
-                            // podržavamo i slanje ID-a i slanje tekst vrijednosti ("true"/"false")
-                            if ((provided.SelectedAnswerIds?.Length ?? 0) > 0)
+                            // 1) ako je poslat ID → poredi ID
+                            if ((provided?.SelectedAnswerIds?.Length ?? 0) > 0)
                             {
-                                var selId = provided.SelectedAnswerIds![0];
-                                isCorrect = q.Answers.Any(a => a.Id == selId && a.IsCorrect);
+                                var selId = provided!.SelectedAnswerIds![0];
+                                userSelectedIds.Add(selId);
+                                isCorrect = correctIds.Contains(selId);
                                 userAnswers.Add(new UserAnswer { QuestionId = q.Id, AnswerText = selId });
                             }
-                            else
+                            // 2) ako je poslat tekst → poredi true/false
+                            else if (!string.IsNullOrWhiteSpace(provided?.Text))
                             {
-                                var txt = (provided.Text ?? "").Trim().ToLowerInvariant();
-                                bool chosenTrue = txt is "true" or "tačno" or "tacno";
+                                userText = (provided!.Text ?? "").Trim().ToLowerInvariant();
+                                bool chosenTrue = userText is "true" or "tačno" or "tacno";
                                 var correctAns = q.Answers.FirstOrDefault(a => a.IsCorrect);
-                                bool correctTrue =
-                                    (correctAns?.Text ?? "").Trim().Equals("Tačno", StringComparison.OrdinalIgnoreCase) ||
+                                bool correctTrue = IsTrueLabel(correctAns?.Text) ||
                                     (correctAns?.Text ?? "").Trim().Equals("True", StringComparison.OrdinalIgnoreCase);
                                 isCorrect = chosenTrue == correctTrue;
-
-                                userAnswers.Add(new UserAnswer { QuestionId = q.Id, AnswerText = txt });
+                                userAnswers.Add(new UserAnswer { QuestionId = q.Id, AnswerText = userText });
+                            }
+                            // 3) uopšte nije odgovoreno → NETAČNO
+                            else
+                            {
+                                isCorrect = false;
+                                userAnswers.Add(new UserAnswer { QuestionId = q.Id, AnswerText = "" });
                             }
                             break;
                         }
+
                     case QuestionTypes.FillIn:
                         {
-                            var txt = (provided.Text ?? "").Trim();
-                            isCorrect = q.Answers.Any(a =>
-                                string.Equals(a.Text?.Trim(), txt, StringComparison.OrdinalIgnoreCase));
-
-                            userAnswers.Add(new UserAnswer { QuestionId = q.Id, AnswerText = txt });
+                            userText = (provided?.Text ?? "").Trim();
+                            isCorrect = q.Answers.Any(a => string.Equals(a.Text?.Trim(), userText, StringComparison.OrdinalIgnoreCase));
+                            userAnswers.Add(new UserAnswer { QuestionId = q.Id, AnswerText = userText });
                             break;
                         }
+
                     default:
                         userAnswers.Add(new UserAnswer { QuestionId = q.Id, AnswerText = "" });
                         break;
                 }
 
                 if (isCorrect) correct++;
+
+                details.Add(new QuestionResultDto
+                {
+                    QuestionId = q.Id,
+                    IsCorrect = isCorrect,
+                    CorrectAnswerIds = correctIds,
+                    CorrectAnswerTexts = correctTexts,
+                    UserSelectedAnswerIds = userSelectedIds,
+                    UserText = userText
+                });
             }
 
             var userId =
                 User.FindFirst(ClaimTypes.NameIdentifier)?.Value ??
                 User.FindFirst("sub")?.Value ??
-                User.Identity?.Name ??
-                string.Empty;
+                User.Identity?.Name ?? string.Empty;
 
             var result = new QuizResult
             {
@@ -155,7 +179,8 @@ namespace Quiz.Api.Controllers
                 resultId = result.Id,
                 correct,
                 total,
-                percentage = result.Percentage
+                percentage = result.Percentage,
+                details   // ⬅ FE koristi ovo za prikaz
             });
         }
     }
